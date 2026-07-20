@@ -22,9 +22,9 @@
     (setq-local show-trailing-whitespace t))
   :config
   ;; Fonts
-  (set-face-attribute 'default        nil :family "Iosevka"        :height 120)
-  (set-face-attribute 'variable-pitch nil :family "Crimson Pro" :height 120)
-  (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 120)
+  (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
+  (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 130)
+  (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 130)
   ;; UI chrome
   (menu-bar-mode   0)
   (tool-bar-mode   0)
@@ -44,7 +44,8 @@
         ring-bell-function                    'ignore
         visible-bell                          nil
         inhibit-startup-message               t
-        backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/"))))
+        backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
+	vc-follow-symlinks t)
   ;; Editing behaviour
   (cua-mode              1)
   (show-paren-mode       1)
@@ -117,7 +118,14 @@
   (require 'org-roam-protocol))
 
 (use-package markdown-mode
-  :init (setq markdown-command "multimarkdown"))
+  :mode ("\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "pandoc")
+  :custom
+  (markdown-hide-markup t)
+  (markdown-fontify-code-blocks-natively t)
+  (markdown-header-scaling t)
+  ;; (markdown-hide-urls t)
+  ))
 
 (use-package doom-themes
   :config
@@ -140,7 +148,7 @@
   :config
   (which-key-mode +1))
 
-(use-package treemacs
+(use-package treemacsl
   :bind
   (:map global-map
         ("M-0"       . treemacs-select-window)

@@ -1,0 +1,11 @@
+# OPTIONAL USE flags for common applications
+# Does not include deps' USE flags
+
+app-admin/keepassxc browser
+
+media-fonts/iosevka iosevka-aile iosevka-etoile iosevka-slab
+
+dev-util/android-tools udev
+
+sys-devel/gcc jit
+app-editors/emacs jit tree-sitter gui athena Xaw3d -motif -gtk dynamic-loading sqlite harfbuzz imagemagick

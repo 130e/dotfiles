@@ -1,0 +1,26 @@
+* Personal dotfiles
+
+Example usage:
+
+#+begin_src shell
+  cd dotfiles/
+  # Dry run
+  stow -n -v -t ~ emacs
+  # Deploy
+  stow -t ~ emacs # add .emacs.d/ to ~
+  stow -t ~/.config niri
+
+  # remove symlink
+  stow -t ~/.config -D niri
+#+end_src
+
+Use =--adopt= to gather files from current config. This is from *target* to *source*.
+
+
+** Config
+
+Write a =.stowrc= to skip specifying path every time. In =dotfiles/= directory,
+
+#+begin_example
+--target=/home/username/.config/
+#+end_example

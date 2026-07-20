@@ -1,0 +1,27 @@
+# dms, niri
+gui-apps/dankmaterialshell ~amd64
+dev-cpp/cpptrace ~amd64
+
+gui-apps/quickshell ~amd64
+dev-libs/libdwarf ~amd64
+
+x11-misc/matugen ~amd64
+gui-apps/dgop ~amd64
+
+gui-wm/niri ~amd64
+gui-apps/xwayland-satellite ~amd64
+
+# Steam
+*/*::steam-overlay
+games-util/game-device-udev-rules
+sys-libs/libudev-compat
+
+# Others
+=app-admin/keepassxc-2.8.0_pre20260629 ~amd64
+
+=app-emacs/doom-themes-2.3.0_p20231208 ~amd64
+=app-emacs/org-roam-2.3.1 ~amd64
+
+=net-im/zoom-7.0.0.1666-r1 ~amd64
+
+=games-util/heroic-bin-2.22.0 ~amd64

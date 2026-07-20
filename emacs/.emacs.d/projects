@@ -1,0 +1,6 @@
+;;; -*- lisp-data -*-
+(("/ssh:genela:/nvme/ztliu/ipcd/")
+ ("/ssh:genela:/data/ztliu/webrtc_projects/webrtc/src/")
+ ("/ssh:genela:/data/ztliu/adversarial_perturb/")
+ ("/ssh:genela:/data/ztliu/emulator-test/")
+ ("/ssh:genela:/data/ztliu/dfdetlive/"))

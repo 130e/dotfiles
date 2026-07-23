@@ -1,5 +1,7 @@
 * Personal dotfiles
 
+** Configs
+
 Example usage:
 
 #+begin_src shell
@@ -14,13 +16,9 @@ Example usage:
   stow -t ~/.config -D niri
 #+end_src
 
-Use =--adopt= to gather files from current config. This is from *target* to *source*.
++ Skip =-t= if layout is =~/dotfiles=.
++ Use =--adopt= to gather files from current config. This is from *target* to *source*.
 
+** Portages
 
-** Config
-
-Write a =.stowrc= to skip specifying path every time. In =dotfiles/= directory,
-
-#+begin_example
---target=/home/username/.config/
-#+end_example
+Use script to diff the config. Do not symlink configs.

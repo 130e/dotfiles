@@ -121,11 +121,9 @@
   :mode ("\\.md\\'" . gfm-mode)
   :init (setq markdown-command "pandoc")
   :custom
-  (markdown-hide-markup t)
+  ;; (markdown-hide-markup t)
   (markdown-fontify-code-blocks-natively t)
-  (markdown-header-scaling t)
-  ;; (markdown-hide-urls t)
-  ))
+  (markdown-header-scaling t))
 
 (use-package doom-themes
   :config
@@ -163,7 +161,7 @@
   (interactive "r")
   (shell-command-on-region
    start end
-   "pandoc -f markdown -t org --wrap=preserve" t t))
+   "pandoc -f markdown -t org --wrap=none" t t))
 
 ;; IDE
 (use-package company

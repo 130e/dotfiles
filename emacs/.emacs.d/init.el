@@ -23,8 +23,8 @@
   :config
   ;; Fonts
   (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
-  (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 130)
-  (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 130)
+  (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 1.0)
+  (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
   ;; UI chrome
   (menu-bar-mode   0)
   (tool-bar-mode   0)
@@ -53,11 +53,30 @@
   (delete-selection-mode 1)
   ;; Session persistence
   (setq auto-revert-verbose nil
-        history-length      25)
+        history-length      25
+	;; update bookmark file whenever changes are made
+	bookmark-save-flag 1)
   (auto-revert-mode 1)
   (recentf-mode     1)
   (save-place-mode  1)
-  (savehist-mode    1))
+  (savehist-mode    1)
+  ;; diff
+  (setq diff-font-lock-syntax nil))
+
+;;;; Dired
+(use-package dired
+  :ensure nil
+  :config
+  ;; (setq dired-kill-when-opening-new-dired-buffer t)
+  (setq dired-auto-revert-buffer #'dired-directory-changed-p)
+  (setq dired-clean-up-buffers-too t)
+  (setq dired-clean-confirm-killing-deleted-buffers t)
+  (setq dired-recursive-copies 'always)
+  (setq dired-recursive-deletes 'always)
+  (setq delete-by-moving-to-trash t)
+  (setq dired-create-destination-dirs 'ask)
+  (setq dired-create-destination-dirs-on-trailing-dirsep t)
+  (setq wdired-create-parent-directories t))
 
 ;; org
 (use-package org
@@ -78,6 +97,8 @@
    org-pretty-entities t
    org-agenda-tags-column 0
    org-ellipsis "…"
+   ;; Fold show empty if at least 1 line
+   org-cycle-separator-lines 1
 
    ;; Agenda and todos
    org-agenda-files '("~/RoamNotes/"

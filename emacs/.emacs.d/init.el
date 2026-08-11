@@ -142,7 +142,7 @@
   :mode ("\\.md\\'" . gfm-mode)
   :init (setq markdown-command "pandoc")
   :custom
-  ;; (markdown-hide-markup t)
+  (markdown-hide-markup t)
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 
@@ -166,17 +166,6 @@
 (use-package which-key
   :config
   (which-key-mode +1))
-
-(use-package treemacsl
-  :bind
-  (:map global-map
-        ("M-0"       . treemacs-select-window)
-        ("C-x t 1"   . treemacs-delete-other-windows)
-        ("C-x t t"   . treemacs)
-        ("C-x t d"   . treemacs-select-directory)
-        ("C-x t B"   . treemacs-bookmark)
-        ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag)))
 
 (defun my/markdown-to-org-region (start end)
   (interactive "r")
@@ -212,3 +201,14 @@
 (add-hook 'c-ts-mode-hook #'eglot-ensure)
 (add-hook 'c++-ts-mode-hook #'eglot-ensure)
 (add-hook 'go-ts-mode-hook #'eglot-ensure)
+
+;; visualizing diff
+(use-package diff-hl
+  :hook ((prog-mode . diff-hl-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh))
+  :config
+  (global-diff-hl-mode)
+  (diff-hl-flydiff-mode)
+  (unless (display-graphic-p)
+    (diff-hl-margin-mode)))

@@ -8,6 +8,8 @@ app-editors/nano
 app-editors/vscode
 app-emacs/company-mode
 app-emacs/doom-themes
+app-emacs/diff-hl
+app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
 app-emacs/orderless

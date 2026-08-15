@@ -22,7 +22,7 @@
     (setq-local show-trailing-whitespace t))
   :config
   ;; Fonts
-  (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
+  (set-face-attribute 'default        nil :family "Iosevka"        :height 120)
   (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 1.0)
   (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
   ;; UI chrome
@@ -47,7 +47,7 @@
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
 	vc-follow-symlinks t)
   ;; Editing behaviour
-  (cua-mode              1)
+  ;; (cua-mode              1)
   (show-paren-mode       1)
   (electric-pair-mode    1)
   (delete-selection-mode 1)
@@ -148,7 +148,9 @@
 
 (use-package doom-themes
   :config
-  (load-theme 'doom-one t))
+  (load-theme 'doom-one t)
+  ;; (load-theme 'doom-feather-light)
+  )
 
 (use-package vertico
   :custom
@@ -202,7 +204,12 @@
 (add-hook 'c++-ts-mode-hook #'eglot-ensure)
 (add-hook 'go-ts-mode-hook #'eglot-ensure)
 
-;; visualizing diff
+;; vcs git diff
+(use-package magit
+  :bind ("C-x g" . magit-status)
+  :config
+  (setq magit-diff-refine-hunk 'all))
+
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode)
          (magit-pre-refresh . diff-hl-magit-pre-refresh)
@@ -212,3 +219,11 @@
   (diff-hl-flydiff-mode)
   (unless (display-graphic-p)
     (diff-hl-margin-mode)))
+
+;; Note: Tramp do not load env from profile
+;; Force tramp to check path
+(with-eval-after-load 'tramp
+  (dolist (d '("/usr/lib/llvm/22/bin"
+               "/usr/lib/llvm/21/bin"
+               "/usr/lib/llvm/18/bin"))
+    (add-to-list 'tramp-remote-path d)))

@@ -1,0 +1,11 @@
+gui-apps/dankmaterialshell ~amd64
+dev-cpp/cpptrace ~amd64
+
+gui-apps/quickshell ~amd64
+dev-libs/libdwarf ~amd64
+
+x11-misc/matugen ~amd64
+gui-apps/dgop ~amd64
+
+gui-wm/niri ~amd64
+gui-apps/xwayland-satellite ~amd64

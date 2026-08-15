@@ -1,0 +1,17 @@
+# firefox pgo
+x11-base/xorg-server xvfb
+
+# dankmaterialshell
+dev-cpp/cpptrace unwind
+
+# kdeconnect
+net-dns/avahi mdnsresponder-compat
+
+# X11 videocards
+x11-libs/libdrm video_cards_radeon
+
+# WeChat appimage
+# app-crypt/mit-krb5
+
+app-admin/keepassxc browser
+sys-libs/zlib minizip

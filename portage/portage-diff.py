@@ -67,9 +67,11 @@ def main() -> int:
         else:
             for rp in repo_dir.iterdir():
                 if not rp.is_file():
+                    # TODO: nest dir
                     continue
                 hp = host_dir / rp.name
-                if hp.exists():
+                if not hp.exists():
+                    print(f"[Skip] {rp} missing on host.")
                     compare_cfg(rp, hp)
     return 0
 

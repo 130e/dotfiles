@@ -57,6 +57,7 @@ media-libs/libogg                 abi_x86_32
 media-libs/libpng                 abi_x86_32
 media-libs/libpulse               abi_x86_32
 media-libs/libsdl2                abi_x86_32
+media-libs/libsdl3                abi_x86_32
 media-libs/libsndfile             abi_x86_32
 media-libs/libva                  abi_x86_32
 media-libs/libvorbis              abi_x86_32
@@ -107,14 +108,11 @@ x11-libs/cairo                    abi_x86_32
 x11-libs/extest                   abi_x86_32
 x11-libs/gdk-pixbuf               abi_x86_32
 x11-libs/gtk+                     abi_x86_32
-x11-libs/libdrm                   abi_x86_32
 x11-libs/libICE                   abi_x86_32
-x11-libs/libpciaccess             abi_x86_32
 x11-libs/libSM                    abi_x86_32
-x11-libs/libvdpau                 abi_x86_32
 x11-libs/libX11                   abi_x86_32
+x11-libs/libXScrnSaver            abi_x86_32
 x11-libs/libXau                   abi_x86_32
-x11-libs/libxcb                   abi_x86_32
 x11-libs/libXcomposite            abi_x86_32
 x11-libs/libXcursor               abi_x86_32
 x11-libs/libXdamage               abi_x86_32
@@ -124,20 +122,24 @@ x11-libs/libXfixes                abi_x86_32
 x11-libs/libXft                   abi_x86_32
 x11-libs/libXi                    abi_x86_32
 x11-libs/libXinerama              abi_x86_32
-x11-libs/libxkbcommon             abi_x86_32
 x11-libs/libXrandr                abi_x86_32
 x11-libs/libXrender               abi_x86_32
-x11-libs/libXScrnSaver            abi_x86_32
-x11-libs/libxshmfence             abi_x86_32
 x11-libs/libXtst                  abi_x86_32
 x11-libs/libXxf86vm               abi_x86_32
+x11-libs/libdrm                   abi_x86_32
+x11-libs/libpciaccess             abi_x86_32
+x11-libs/libvdpau                 abi_x86_32
+x11-libs/libxcb                   abi_x86_32
+x11-libs/libxkbcommon             abi_x86_32
+x11-libs/libxshmfence             abi_x86_32
 x11-libs/pango                    abi_x86_32
 x11-libs/pixman                   abi_x86_32
 x11-libs/xcb-util-keysyms         abi_x86_32
 x11-misc/colord                   abi_x86_32
 
-gui-libs/egl-gbm                  abi_x86_32
-gui-libs/egl-wayland              abi_x86_32
-gui-libs/egl-wayland2             abi_x86_32
-gui-libs/egl-x11                  abi_x86_32
-x11-drivers/nvidia-drivers        abi_x86_32
+# Nvidia graphic cards
+gui-libs/egl-gbm            abi_x86_32
+gui-libs/egl-wayland        abi_x86_32
+gui-libs/egl-wayland2       abi_x86_32
+gui-libs/egl-x11            abi_x86_32
+x11-drivers/nvidia-drivers  abi_x86_32

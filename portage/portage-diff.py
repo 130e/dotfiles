@@ -59,7 +59,7 @@ def main() -> int:
     for repo_dir_s, host_dir_s in PKG_CONF_DIR.items():
         repo_dir, host_dir = Path(repo_dir_s), Path(host_dir_s)
         if not host_dir.exists():
-            print(f"[Skip] {host_dir} missing on host.")
+            print(f"[Skip] {host_dir} missing on host.", end="\n\n")
             continue
 
         if repo_dir.is_file():
@@ -71,8 +71,9 @@ def main() -> int:
                     continue
                 hp = host_dir / rp.name
                 if not hp.exists():
-                    print(f"[Skip] {rp} missing on host.")
-                    compare_cfg(rp, hp)
+                    print(f"[Skip] {rp} missing on host.", end="\n\n")
+                    continue
+                compare_cfg(rp, hp)
     return 0
 
 

@@ -7,7 +7,7 @@ dev-cpp/cpptrace unwind
 # kdeconnect
 net-dns/avahi mdnsresponder-compat
 
-# X11 videocards
+# AMD video cards
 x11-libs/libdrm video_cards_radeon
 
 # WeChat appimage

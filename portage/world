@@ -1,5 +1,4 @@
 app-admin/doas
-app-admin/emacs-updater
 app-admin/keepassxc
 app-admin/stow
 app-admin/sysklogd
@@ -11,14 +10,12 @@ app-editors/vscode
 app-emacs/company-mode
 app-emacs/diff-hl
 app-emacs/doom-themes
-app-emacs/emacs-daemon
 app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
 app-emacs/orderless
 app-emacs/org-modern
 app-emacs/org-roam
-app-emacs/treemacs
 app-emacs/vertico
 app-emacs/vterm
 app-emacs/which-key
@@ -70,7 +67,6 @@ net-misc/tigervnc
 net-misc/yt-dlp
 net-p2p/syncthing
 net-print/cups-meta
-net-wireless/bluez
 sys-apps/fd
 sys-apps/mlocate
 sys-apps/ripgrep

@@ -70,6 +70,7 @@ net-print/cups-meta
 sys-apps/fd
 sys-apps/mlocate
 sys-apps/ripgrep
+sys-block/io-scheduler-udev-rules
 sys-fs/dosfstools
 sys-fs/exfatprogs
 sys-fs/fuse:0

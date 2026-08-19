@@ -10,6 +10,8 @@
 ;;;; General emacs options
 (use-package emacs
   :demand t
+  :bind (("C-z" . undo)
+	 ("C-S-z" . undo-redo))
   :hook
   ((emacs-lisp-mode . outline-minor-mode)
    (prog-mode       . display-line-numbers-mode)
@@ -44,6 +46,8 @@
         ring-bell-function                    'ignore
         visible-bell                          nil
         inhibit-startup-message               t
+	initial-major-mode                    'org-mode
+	initial-scratch-message               "* Scratch\n"
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
 	vc-follow-symlinks t)
   ;; Editing behaviour
@@ -123,18 +127,18 @@
          ("C-c j" . org-roam-dailies-capture-today)
 	 ("C-c n d" . org-roam-dailies-find-directory))
   :config
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-	org-roam-dailies-capture-templates
-	'(("t" "todo" entry "* TODO %?\n%U"
-           :target (file+head+olp "%<%Y-%m-%d>.org"
-                                  "#+title: %<%Y-%m-%d>\n* Journal\n* Tasks\n"
-                                  ("Tasks"))
-           :empty-lines-before 1)
-          ("j" "journal" entry "* %<%H:%M> %?"
-           :target (file+head+olp "%<%Y-%m-%d>.org"
-                                  "#+title: %<%Y-%m-%d>\n* Journal\n"
-                                  ("Journal"))
-           :empty-lines 1)))
+  ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
+  ;; 	org-roam-dailies-capture-templates
+  ;; 	'(("t" "todo" entry "* TODO %?\n%U"
+  ;;          :target (file+head+olp "%<%Y-%m-%d>.org"
+  ;;                                 "#+title: %<%Y-%m-%d>\n* Journal\n* Tasks\n"
+  ;;                                 ("Tasks"))
+  ;;          :empty-lines-before 1)
+  ;;         ("j" "journal" entry "* %<%H:%M> %?"
+  ;;          :target (file+head+olp "%<%Y-%m-%d>.org"
+  ;;                                 "#+title: %<%Y-%m-%d>\n* Journal\n"
+  ;;                                 ("Journal"))
+  ;;          :empty-lines 1)))
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
 

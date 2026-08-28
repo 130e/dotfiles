@@ -96,7 +96,7 @@
    org-special-ctrl-a/e t
    org-insert-heading-respect-content t
    ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
+   org-hide-emphasis-markers nil
    org-hide-drawer-startup t
    org-pretty-entities t
    org-agenda-tags-column 0
@@ -119,13 +119,18 @@
 (use-package org-roam
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c f" . org-roam-node-find)
-         ("C-c n g" . org-roam-graph)
-         ("C-c n i" . org-roam-node-insert)
+  :bind (("C-c f" . org-roam-node-find)
          ("C-c c" . org-roam-capture)
-         ("C-c j" . org-roam-dailies-capture-today)
-	 ("C-c n d" . org-roam-dailies-find-directory))
+	 ("C-c n l" . org-roam-buffer-toggle)
+	 ("C-c n g" . org-roam-graph)
+	 ("C-c n n" . org-id-get-create)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c j c" . org-roam-dailies-capture-today)
+	 ("C-c j d" . org-roam-dailies-find-directory)
+	 ("C-c j t" . org-roam-dailies-goto-today)
+	 ("C-c j y" . org-roam-dailies-goto-yesterday)
+	 ("C-c j T" . org-roam-dailies-goto-tomorrow)
+	 ("C-c j D" . org-roam-dailies-goto-date))
   :config
   ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
   ;; 	org-roam-dailies-capture-templates
@@ -142,13 +147,32 @@
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
 
+(add-to-list 'display-buffer-alist
+             '("\\*org-roam\\*"
+               (display-buffer-in-side-window)
+               (side . right)
+               (window-width . 0.33)
+               (window-parameters . ((no-delete-other-windows . t)))))
+
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
   :init (setq markdown-command "pandoc")
   :custom
-  (markdown-hide-markup t)
+  (markdown-hide-markup nil)
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
+
+(use-package auctex
+  :hook ((LaTeX-mode . turn-on-reftex)
+         (LaTeX-mode . TeX-source-correlate-mode)
+         (LaTeX-mode . LaTeX-math-mode))
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (TeX-command-default "LatexMk")
+  (TeX-view-program-selection '((output-pdf "PDF Tools")))
+  (TeX-source-correlate-start-server t)
+  (reftex-plug-into-AUCTeX t))
 
 (use-package doom-themes
   :config
@@ -228,6 +252,5 @@
 ;; Force tramp to check path
 (with-eval-after-load 'tramp
   (dolist (d '("/usr/lib/llvm/22/bin"
-               "/usr/lib/llvm/21/bin"
-               "/usr/lib/llvm/18/bin"))
+               "/usr/lib/llvm/21/bin"))
     (add-to-list 'tramp-remote-path d)))

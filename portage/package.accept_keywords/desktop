@@ -1,11 +1,11 @@
+# dms
 gui-apps/dankmaterialshell ~amd64
 dev-cpp/cpptrace ~amd64
-
 gui-apps/quickshell ~amd64
 dev-libs/libdwarf ~amd64
-
+# dms optional
 x11-misc/matugen ~amd64
 gui-apps/dgop ~amd64
-
+# niri wm
 gui-wm/niri ~amd64
 gui-apps/xwayland-satellite ~amd64

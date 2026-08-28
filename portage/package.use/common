@@ -3,4 +3,8 @@ dev-util/android-tools udev
 media-fonts/fonts-meta emoji cjk
 media-fonts/iosevka iosevka-aile iosevka-etoile iosevka-slab
 net-analyzer/tcpdump suid
+
+# deps
 sys-devel/gcc jit
+media-libs/gd fontconfig
+sys-apps/util-linux caps

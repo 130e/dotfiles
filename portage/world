@@ -1,3 +1,11 @@
+app-emacs/auctex
+app-emacs/pdf-tools
+app-portage/pfl
+app-text/texlive
+dev-tex/latexmk
+dev-texlive/texlive-latexextra
+media-gfx/graphviz
+media-sound/strawberry
 app-admin/doas
 app-admin/keepassxc
 app-admin/stow

@@ -260,8 +260,8 @@ window-rule {
     draw-border-with-background false
 }
 window-rule {
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
-    match app-id="zoom"
+    match app-id=r#"^firefox"# title="^Picture-in-Picture$"
+    match app-id=r#"^firefox"# title="^Close Firefox$"
     open-floating true
 }
 window-rule {
@@ -270,7 +270,7 @@ window-rule {
 }
 window-rule {
     // firefox notifications
-    match app-id="^firefox-bin$" title="^$"
+    match app-id="^firefox" title="^$"
     open-focused false
     open-floating true
     default-floating-position x=10 y=10 relative-to="top-right"

@@ -132,6 +132,11 @@
 	 ("C-c j T" . org-roam-dailies-goto-tomorrow)
 	 ("C-c j D" . org-roam-dailies-goto-date))
   :config
+  ;; (setq org-roam-dailies-capture-templates
+  ;; 	'(("d" "default" plain "%?"
+  ;;          :target (file+head "%<%Y-%m-%d>.org"
+  ;;                             "#+title: %<%Y-%m-%d>\n* Reminder [/]\n\n- [ ] ")
+  ;;          :unnarrowed t)))
   ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
   ;; 	org-roam-dailies-capture-templates
   ;; 	'(("t" "todo" entry "* TODO %?\n%U"
@@ -162,6 +167,7 @@
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 
+;; Latex Tex
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
          (LaTeX-mode . TeX-source-correlate-mode)
@@ -173,6 +179,19 @@
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (TeX-source-correlate-start-server t)
   (reftex-plug-into-AUCTeX t))
+
+(setq org-preview-latex-default-process 'dvisvgm)
+;; (plist-put org-format-latex-options :scale 1.3)
+(setq org-startup-with-latex-preview t)           ; or #+STARTUP: latexpreview per file
+;; (setq org-highlight-latex-and-related '(native latex script entities))
+
+;; Fix for TRAMP. Force latex preview to render locally
+(defun my/org-preview-latex-locally (orig &rest args)
+  (if (file-remote-p default-directory)
+      (let ((default-directory temporary-file-directory))
+        (apply orig args))
+    (apply orig args)))
+(advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 
 (use-package doom-themes
   :config

@@ -1,3 +1,7 @@
+app-admin/keepassxc browser
+
+# deps
+
 # firefox pgo
 x11-base/xorg-server xvfb
 
@@ -13,5 +17,6 @@ x11-libs/libdrm video_cards_radeon
 # WeChat appimage
 # app-crypt/mit-krb5
 
-app-admin/keepassxc browser
+# Telegram
+media-video/ffmpeg opus vpx
 sys-libs/zlib minizip

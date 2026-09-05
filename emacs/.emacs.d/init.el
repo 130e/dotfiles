@@ -167,18 +167,71 @@
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 
-;; Latex Tex
+;; Tex LaTex
+;; TODO: review fix
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
          (LaTeX-mode . TeX-source-correlate-mode)
-         (LaTeX-mode . LaTeX-math-mode))
+         (LaTeX-mode . LaTeX-math-mode)
+         (LaTeX-mode . my/LaTeX-prefer-latexmk))
+  :init
+  ;; `LaTeX-mode' ends its body with (setq TeX-command-default "LaTeX"), and
+  ;; that setting is buffer-local, so customizing the global value has no
+  ;; effect.  Override it from `LaTeX-mode-hook', which runs afterwards.
+  (defun my/LaTeX-prefer-latexmk ()
+    "Use LaTeXMk as the default command for `C-c C-a' and `C-c C-c'."
+    (setq TeX-command-default "LaTeXMk"))
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
-  (TeX-command-default "LatexMk")
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (TeX-source-correlate-start-server t)
   (reftex-plug-into-AUCTeX t))
+
+;; AUCTeX defers loading, and nothing pulls in the `auctex' feature itself,
+;; so hang the extra setup off `tex' -- that is where TeX-command-list and
+;; TeX-after-compilation-finished-functions actually live.
+(with-eval-after-load 'tex
+  ;; Refresh the PDF buffer after every successful compile.
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer)
+
+  ;; ...but that hook is only run by `TeX-LaTeX-sentinel', and the stock
+  ;; LaTeXMk entry runs `TeX-run-format', whose sentinel is
+  ;; `TeX-TeX-sentinel' -- which does not run it, so the PDF window keeps
+  ;; showing the stale file.  `TeX-run-TeX' is `TeX-run-format' plus the
+  ;; major mode's own sentinel, i.e. `TeX-LaTeX-sentinel' here.
+  (setf (nth 2 (assoc "LaTeXMk" TeX-command-list)) #'TeX-run-TeX)
+
+  ;; Extra latexmk entries, offered in the C-c C-c completion list.
+  ;; "LaTeXMk Force" ignores latexmk's .fdb_latexmk cache; use it after
+  ;; fixing something outside the source tree (installing a TeX package,
+  ;; a path, a .bst) that latexmk cannot notice on its own.
+  (add-to-list 'TeX-command-list
+               '("LaTeXMk Force" "latexmk -g %(latexmk-out) %(file-line-error) \
+%`%(extraopts) %S%(mode)%' %t"
+                 TeX-run-TeX nil (LaTeX-mode docTeX-mode)
+                 :help "Run LaTeXMk, forcing a full rebuild (-g)"))
+  (add-to-list 'TeX-command-list
+               '("LaTeXMk Clean" "latexmk -C %t"
+                 TeX-run-command nil (LaTeX-mode docTeX-mode)
+                 :help "Remove every latexmk-generated file, including the PDF (-C)")))
+
+(use-package pdf-tools
+  :magic ("%PDF" . pdf-view-mode)
+  :hook (pdf-view-mode . pdf-view-roll-minor-mode)  ; pageless continuous scroll
+  :custom
+  (pdf-view-continuous t)
+  :config (pdf-loader-install))
+
+;; Show the compiled PDF in a dedicated half-width window on the right,
+;; instead of taking over the source window.
+(add-to-list 'display-buffer-alist
+             '((derived-mode . pdf-view-mode)
+               (display-buffer-reuse-window display-buffer-in-side-window)
+               (side . right)
+               (window-width . 0.5)
+               (dedicated . t)))
 
 (setq org-preview-latex-default-process 'dvisvgm)
 ;; (plist-put org-format-latex-options :scale 1.3)

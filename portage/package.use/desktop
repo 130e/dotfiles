@@ -2,8 +2,9 @@ app-admin/keepassxc browser
 
 # deps
 
-# firefox pgo
+# firefox
 x11-base/xorg-server xvfb
+media-libs/libvpx postproc
 
 # dankmaterialshell
 dev-cpp/cpptrace unwind

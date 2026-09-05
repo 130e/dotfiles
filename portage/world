@@ -49,6 +49,8 @@ dev-python/python-lsp-black
 dev-python/python-lsp-server
 dev-tex/latexmk
 dev-texlive/texlive-latexextra
+dev-texlive/texlive-mathscience
+dev-texlive/texlive-publishers
 dev-util/android-tools
 dev-util/claude-code
 dev-vcs/git

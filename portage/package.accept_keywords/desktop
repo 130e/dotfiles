@@ -1,7 +1,7 @@
 # dms
-gui-apps/dankmaterialshell ~amd64
+gui-apps/dankmaterialshell **
 dev-cpp/cpptrace ~amd64
-gui-apps/quickshell ~amd64
+gui-apps/quickshell **
 dev-libs/libdwarf ~amd64
 # dms optional
 x11-misc/matugen ~amd64

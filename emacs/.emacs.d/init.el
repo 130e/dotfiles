@@ -106,7 +106,16 @@
 
    ;; Agenda and todos
    org-agenda-files '("~/RoamNotes/"
-		      "~/RoamNotes/daily/")))
+		      "~/RoamNotes/daily/")
+   org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELLED(c@)"))
+   org-log-done 'time
+   org-log-into-drawer t
+
+   ;; Refile: complete on outline paths, not timestamped file names
+   org-refile-targets '((org-agenda-files :maxlevel . 2))
+   org-refile-use-outline-path 'file
+   org-outline-path-complete-in-steps nil
+   org-refile-allow-creating-parent-nodes 'confirm))
 
 ;;; Extensions
 (use-package org-modern
@@ -117,38 +126,56 @@
   (org-modern-star 'replace))
 
 (use-package org-roam
+  :preface
+  ;; `org-roam-dailies-goto-*' forwards its template key to org-capture, so with
+  ;; more than one template it pops the template menu just to visit a file.
+  (defun my/org-roam-dailies-goto-today ()
+    (interactive)
+    (org-roam-dailies-goto-today "n"))
+  (defun my/org-roam-dailies-goto-yesterday (n)
+    (interactive "p")
+    (org-roam-dailies-goto-yesterday n "n"))
+  (defun my/org-roam-dailies-goto-tomorrow (n)
+    (interactive "p")
+    (org-roam-dailies-goto-tomorrow n "n"))
+  (defun my/org-roam-dailies-goto-date ()
+    (interactive)
+    (org-roam-dailies-goto-date nil "n"))
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
+  (org-roam-dailies-capture-templates
+   '(("t" "todo" entry "* TODO %?"
+      :target (file+head+olp "%<%Y-%m-%d>.org"
+			     "#+title: %<%Y-%m-%d>\n"
+			     ("Inbox"))
+      :unnarrowed t)
+     ("n" "note" entry "* %?"
+      :target (file+head "%<%Y-%m-%d>.org"
+			 "#+title: %<%Y-%m-%d>\n")
+      :unnarrowed t)
+     ("m" "meeting" entry "* Meeting: %^{with} :meeting:\n%?"
+      :target (file+head "%<%Y-%m-%d>.org"
+			 "#+title: %<%Y-%m-%d>\n")
+      :unnarrowed t)))
+  (org-roam-mode-sections
+   '(org-roam-backlinks-section
+     org-roam-reflinks-section))
   :bind (("C-c f" . org-roam-node-find)
          ("C-c c" . org-roam-capture)
 	 ("C-c n l" . org-roam-buffer-toggle)
-	 ("C-c n g" . org-roam-graph)
+	 ;; ("C-c n g" . org-roam-graph)
 	 ("C-c n n" . org-id-get-create)
          ("C-c n i" . org-roam-node-insert)
+	 ;; Move a daily subtree/region into an existing node, or out to a new one.
+	 ("C-c n r" . org-roam-refile)
+	 ("C-c n e" . org-roam-extract-subtree)
          ("C-c j c" . org-roam-dailies-capture-today)
-	 ("C-c j d" . org-roam-dailies-find-directory)
-	 ("C-c j t" . org-roam-dailies-goto-today)
-	 ("C-c j y" . org-roam-dailies-goto-yesterday)
-	 ("C-c j T" . org-roam-dailies-goto-tomorrow)
-	 ("C-c j D" . org-roam-dailies-goto-date))
+	 ("C-c j t" . my/org-roam-dailies-goto-today)
+	 ("C-c j y" . my/org-roam-dailies-goto-yesterday)
+	 ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
+	 ("C-c j d" . my/org-roam-dailies-goto-date)
+	 ("C-c j D" . org-roam-dailies-find-directory))
   :config
-  ;; (setq org-roam-dailies-capture-templates
-  ;; 	'(("d" "default" plain "%?"
-  ;;          :target (file+head "%<%Y-%m-%d>.org"
-  ;;                             "#+title: %<%Y-%m-%d>\n* Reminder [/]\n\n- [ ] ")
-  ;;          :unnarrowed t)))
-  ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-  ;; 	org-roam-dailies-capture-templates
-  ;; 	'(("t" "todo" entry "* TODO %?\n%U"
-  ;;          :target (file+head+olp "%<%Y-%m-%d>.org"
-  ;;                                 "#+title: %<%Y-%m-%d>\n* Journal\n* Tasks\n"
-  ;;                                 ("Tasks"))
-  ;;          :empty-lines-before 1)
-  ;;         ("j" "journal" entry "* %<%H:%M> %?"
-  ;;          :target (file+head+olp "%<%Y-%m-%d>.org"
-  ;;                                 "#+title: %<%Y-%m-%d>\n* Journal\n"
-  ;;                                 ("Journal"))
-  ;;          :empty-lines 1)))
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
 

@@ -86,6 +86,7 @@
 (use-package org
   :bind
   (("C-c a" . org-agenda)
+   ("C-c c" . org-capture)
    ("C-c l" . org-store-link))
   :config
   (setq
@@ -96,7 +97,7 @@
    org-special-ctrl-a/e t
    org-insert-heading-respect-content t
    ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers nil
+   org-hide-emphasis-markers t
    org-hide-drawer-startup t
    org-pretty-entities t
    org-agenda-tags-column 0
@@ -110,12 +111,42 @@
    org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELLED(c@)"))
    org-log-done 'time
    org-log-into-drawer t
-
+   ;; Repeater log
+   org-log-repeat 'time
+   ;; Agenda schedule
+   org-agenda-span 'day
+   org-agenda-start-on-weekday nil
+   org-agenda-time-grid '((daily today require-timed remove-match)
+                        (600 700 900 1200 1400 1800 2100)
+                        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string "⭠ now ─────────"
+   org-agenda-skip-scheduled-if-done t
+   org-agenda-skip-deadline-if-done t
+   ;; (org-agenda-start-with-log-mode t)  ; uncomment to see completions by default
+   org-habit-graph-column 60
+   org-habit-show-habits-only-for-today t
+   org-agenda-custom-commands
+   '(("d" "Day"
+      ((agenda "")
+       (todo "TODO" ((org-agenda-overriding-header "Unscheduled")
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'scheduled 'deadline)))))))
+   ;; Capture: undated TODOs land in inbox.org; schedule when the date is known
+   org-capture-templates
+   '(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
+      "* TODO %?\n%U" :empty-lines 1)
+     ("s" "Scheduled todo" entry (file "~/RoamNotes/inbox.org")
+      "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
+     ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
+      "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
+     ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
+      "* TODO %?\n%U\n%a" :empty-lines 1))
    ;; Refile: complete on outline paths, not timestamped file names
    org-refile-targets '((org-agenda-files :maxlevel . 2))
    org-refile-use-outline-path 'file
    org-outline-path-complete-in-steps nil
-   org-refile-allow-creating-parent-nodes 'confirm))
+   org-refile-allow-creating-parent-nodes 'confirm)
+  (require 'org-habit))
 
 ;;; Extensions
 (use-package org-modern
@@ -144,24 +175,21 @@
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
   (org-roam-dailies-capture-templates
-   '(("t" "todo" entry "* TODO %?"
-      :target (file+head+olp "%<%Y-%m-%d>.org"
-			     "#+title: %<%Y-%m-%d>\n"
-			     ("Inbox"))
-      :unnarrowed t)
-     ("n" "note" entry "* %?"
+   '(("n" "note" entry "* %?"
       :target (file+head "%<%Y-%m-%d>.org"
 			 "#+title: %<%Y-%m-%d>\n")
+      :empty-lines 1
       :unnarrowed t)
      ("m" "meeting" entry "* Meeting: %^{with} :meeting:\n%?"
       :target (file+head "%<%Y-%m-%d>.org"
 			 "#+title: %<%Y-%m-%d>\n")
+      :empty-lines 1
       :unnarrowed t)))
   (org-roam-mode-sections
    '(org-roam-backlinks-section
      org-roam-reflinks-section))
   :bind (("C-c f" . org-roam-node-find)
-         ("C-c c" . org-roam-capture)
+         ;; ("C-c x" . org-roam-capture)
 	 ("C-c n l" . org-roam-buffer-toggle)
 	 ;; ("C-c n g" . org-roam-graph)
 	 ("C-c n n" . org-id-get-create)
@@ -190,7 +218,7 @@
   :mode ("\\.md\\'" . gfm-mode)
   :init (setq markdown-command "pandoc")
   :custom
-  (markdown-hide-markup nil)
+  (markdown-hide-markup t)
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 

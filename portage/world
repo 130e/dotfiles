@@ -2,6 +2,7 @@ app-admin/doas
 app-admin/keepassxc
 app-admin/stow
 app-admin/sysklogd
+app-arch/7zip
 app-arch/unrar
 app-arch/zip
 app-crypt/mit-krb5
@@ -22,6 +23,7 @@ app-emacs/pdf-tools
 app-emacs/vertico
 app-emacs/vterm
 app-emacs/which-key
+app-eselect/eselect-java
 app-eselect/eselect-repository
 app-i18n/fcitx
 app-i18n/fcitx-configtool
@@ -42,6 +44,7 @@ app-text/texlive
 app-text/tree
 app-text/zotero-bin
 dev-go/gopls
+dev-java/openjdk
 dev-lang/go
 dev-lang/python
 dev-libs/tree-sitter-meta
@@ -54,6 +57,7 @@ dev-texlive/texlive-publishers
 dev-util/android-tools
 dev-util/claude-code
 dev-vcs/git
+games-util/gamemode
 games-util/heroic-bin
 games-util/steam-launcher
 gnome-base/nautilus
@@ -68,6 +72,7 @@ media-fonts/iosevka
 media-fonts/noto-cjk
 media-fonts/ubuntu-font-family
 media-gfx/graphviz
+media-libs/libv4l
 media-sound/cava
 media-sound/strawberry
 media-video/mpv
@@ -84,8 +89,10 @@ net-print/cups-meta
 sys-apps/amdgpu_top
 sys-apps/fd
 sys-apps/firejail
+sys-apps/lshw
 sys-apps/mlocate
 sys-apps/ripgrep
+sys-apps/usbutils
 sys-block/io-scheduler-udev-rules
 sys-fs/dosfstools
 sys-fs/exfatprogs

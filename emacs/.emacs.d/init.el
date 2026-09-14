@@ -24,7 +24,7 @@
     (setq-local show-trailing-whitespace t))
   :config
   ;; Fonts
-  (set-face-attribute 'default        nil :family "Iosevka"        :height 120)
+  (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
   (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 1.0)
   (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
   ;; UI chrome
@@ -116,13 +116,21 @@
    ;; Agenda schedule
    org-agenda-span 'day
    org-agenda-start-on-weekday nil
-   org-agenda-time-grid '((daily today require-timed remove-match)
-                        (600 700 900 1200 1400 1800 2100)
-                        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   org-agenda-current-time-string "⭠ now ─────────"
+   ;; org-agenda-time-grid '((daily today require-timed remove-match)
+   ;;                      (600 700 900 1200 1400 1800 2100)
+   ;;                      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   ;; org-agenda-current-time-string "⭠ now ─────────"
    org-agenda-skip-scheduled-if-done t
    org-agenda-skip-deadline-if-done t
    ;; (org-agenda-start-with-log-mode t)  ; uncomment to see completions by default
+   ;; Default agenda sort leads with `habit-down', which parks every habit
+   ;; below the timeline regardless of its hour.  Drop it so habits sort by
+   ;; time along with everything else.
+   org-agenda-sorting-strategy
+   '((agenda time-up urgency-down category-keep)
+     (todo urgency-down category-keep)
+     (tags urgency-down category-keep)
+     (search category-keep))
    org-habit-graph-column 60
    org-habit-show-habits-only-for-today t
    org-agenda-custom-commands
@@ -301,11 +309,14 @@
     (apply orig args)))
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 
-(use-package doom-themes
-  :config
-  (load-theme 'doom-one t)
-  ;; (load-theme 'doom-feather-light)
-  )
+;; Themes
+;; (use-package doom-themes
+;;   :config
+;;   (load-theme 'doom-one t))
+
+(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
+  (add-to-list 'custom-theme-load-path desktop-theme-dir)
+  (load-theme 'noctalia t))
 
 (use-package vertico
   :custom

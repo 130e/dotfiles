@@ -1,11 +1,17 @@
+# niri wm
+gui-wm/niri ~amd64
+gui-apps/xwayland-satellite ~amd64
+
+# Noctalia
+gui-apps/noctalia
+dev-cpp/sdbus-c++
+
 # dms
 gui-apps/dankmaterialshell **
 dev-cpp/cpptrace ~amd64
 gui-apps/quickshell **
 dev-libs/libdwarf ~amd64
+
 # dms optional
 x11-misc/matugen ~amd64
 gui-apps/dgop ~amd64
-# niri wm
-gui-wm/niri ~amd64
-gui-apps/xwayland-satellite ~amd64

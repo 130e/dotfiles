@@ -7,10 +7,10 @@ Example usage:
 #+begin_src shell
   cd dotfiles/
   # Dry run
-  stow -n -v -t ~ emacs
+  stow -n -v emacs
   # Deploy
-  stow -t ~ emacs # add .emacs.d/ to ~
-  stow -t ~/.config niri
+  stow emacs             # add .emacs.d/* to ~
+  stow -t ~/.config niri # add niri/ to ~/.config
 
   # remove symlink
   stow -t ~/.config -D niri

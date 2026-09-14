@@ -5,6 +5,7 @@ gui-apps/xwayland-satellite ~amd64
 # Noctalia
 gui-apps/noctalia
 dev-cpp/sdbus-c++
+x11-themes/adw-gtk3
 
 # dms
 gui-apps/dankmaterialshell **

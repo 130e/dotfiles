@@ -1,0 +1,23 @@
+[general]
+import = [
+    "~/.config/alacritty/themes/noctalia.toml"
+]
+
+[window]
+decorations = "None"
+padding = { x = 12, y = 12 }
+
+[mouse]
+hide_when_typing = true
+
+[bell]
+duration = 0
+
+[cursor]
+style = { shape = "Block", blinking = "On" }
+blink_interval = 500
+unfocused_hollow = true
+
+[font]
+size = 13.0
+normal = { family = "Iosevka" }

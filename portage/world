@@ -61,10 +61,10 @@ games-util/gamemode
 games-util/heroic-bin
 games-util/steam-launcher
 gnome-base/nautilus
-gui-apps/dankmaterialshell
-gui-apps/dgop
+gui-apps/noctalia
 gui-apps/xwayland-satellite
 gui-wm/niri
+gui-wm/umbriel
 kde-misc/kdeconnect
 llvm-core/clang
 media-fonts/fira-code
@@ -93,6 +93,7 @@ sys-apps/lshw
 sys-apps/mlocate
 sys-apps/ripgrep
 sys-apps/usbutils
+sys-apps/xdg-desktop-portal-umbriel
 sys-block/io-scheduler-udev-rules
 sys-fs/dosfstools
 sys-fs/exfatprogs
@@ -101,7 +102,7 @@ sys-fs/ntfs3g
 sys-process/btop
 sys-process/cronie
 www-client/firefox
-x11-misc/matugen
 x11-misc/sddm
 x11-terms/alacritty
 x11-terms/kitty
+x11-themes/adw-gtk3

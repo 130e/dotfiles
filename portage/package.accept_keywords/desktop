@@ -6,6 +6,9 @@ gui-apps/xwayland-satellite ~amd64
 gui-apps/noctalia
 dev-cpp/sdbus-c++
 x11-themes/adw-gtk3
+# umbriel wc
+gui-wm/umbriel
+sys-apps/xdg-desktop-portal-umbriel
 
 # dms
 gui-apps/dankmaterialshell **

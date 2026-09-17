@@ -18,6 +18,17 @@ style = { shape = "Block", blinking = "On" }
 blink_interval = 500
 unfocused_hollow = true
 
+# https://github.com/alacritty/alacritty/wiki/Keyboard-mappings
+[keyboard]
+bindings = [
+  { key = "Enter",   mods = "Shift",         chars = "\n" },
+  { key = "w",       mods = "Alt", action = "Copy"  },
+  { key = "y",       mods = "Alt", action = "Paste"  },
+  { key = "+",       mods = "Control|Shift", action = "IncreaseFontSize" },
+  { key = "-",       mods = "Control",       action = "DecreaseFontSize" },
+  { key = "=",       mods = "Control",       action = "ResetFontSize"    },
+]
+
 [font]
 size = 13.0
 normal = { family = "Iosevka" }

@@ -242,7 +242,6 @@
   ;; that setting is buffer-local, so customizing the global value has no
   ;; effect.  Override it from `LaTeX-mode-hook', which runs afterwards.
   (defun my/LaTeX-prefer-latexmk ()
-    "Use LaTeXMk as the default command for `C-c C-a' and `C-c C-c'."
     (setq TeX-command-default "LaTeXMk"))
   :custom
   (TeX-auto-save t)
@@ -313,7 +312,6 @@
 ;; (use-package doom-themes
 ;;   :config
 ;;   (load-theme 'doom-one t))
-
 (let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
   (add-to-list 'custom-theme-load-path desktop-theme-dir)
   (load-theme 'noctalia t))

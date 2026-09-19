@@ -59,8 +59,6 @@ honor_restored_maximize = false                 # Honor restored maximized state
 # Documentation: https://docs.noctalia.dev/umbriel/configuration/#environment
 
 [environment]
-# ELECTRON_OZONE_PLATFORM_HINT = "auto"
-# SDL_VIDEODRIVER = "wayland"
 
 # Hardware events
 # These commands run when a laptop lid opens or closes. Uncomment either hook
@@ -140,9 +138,10 @@ empty_above = false                             # Keep one empty workspace above
 # workspace. Add `output = "DP-1"` to materialize it only there. A numeric
 # string such as name = "2" remains distinct from index = 2.
 
-# [[workspace]]
-# name = "CHAT"
-# layout.mode = "master"
+# Index=1
+[[workspace]]
+index = 1
+layout.mode = "master"
 
 # ─────────────────────────────── Colors ─────────────────────────────────────
 # Configure every color Umbriel paints. Values stay commented so an included
@@ -182,7 +181,7 @@ empty_above = false                             # Keep one empty workspace above
 
 [appearance]
 prefer_no_csd = true                            # Prefer Umbriel's border-only decoration
-border_width = 2                                # Inner border width, 0-100 logical pixels
+border_width = 3                                # Inner border width, 0-100 logical pixels
 outer_border_width = 0                          # Optional outer ring, 0-100 logical pixels
 corner_radius = 10                              # Radius of the final decorated edge, 0-100
 drag_opacity = 0.75                             # Window opacity during a tiled or floating drag
@@ -223,7 +222,7 @@ variant = ""                                    # Example: ",nodeadkeys" for two
 options = "ctrl:swap_lalt_lctl_lwin,caps:super" # Example: "grp:alt_shift_toggle"
 repeat_rate = 25                                # Key repeats per second, 0-1000
 repeat_delay = 600                              # Delay before repeating, 0-10000 ms
-numlock_toggle = true                           # Enable on connect; false preserves the current state
+numlock_toggle = false                          # Enable on connect; false preserves the current state
 track_layout = "global"                         # global, or window for per-surface layout memory
 
 [input.touchpad]
@@ -301,8 +300,8 @@ follows_mouse = false                           # Focus on pointer motion and Dw
 # Documentation: https://docs.noctalia.dev/umbriel/scratchpads/
 # ────────────────────────────────────────────────────────────────────────────
 
-# [[scratchpad]]
-# name = "terminal"
+[[scratchpad]]
+name = "terminal"
 
 # [[scratchpad]]
 # name = "music"
@@ -325,6 +324,7 @@ follows_mouse = false                           # Focus on pointer motion and Dw
 "Mod+Return" = "spawn:alacritty"
 "Mod+E" = "spawn:emacsclient -c"
 "Mod+B" = "spawn:firefox"
+"Mod+Shift+B" = "spawn:firefox --private-window"
 
 "Alt+Tab" = "spawn:noctalia msg window-switcher"
 "Mod+Space" = "spawn:noctalia msg panel-toggle launcher"
@@ -420,9 +420,9 @@ follows_mouse = false                           # Focus on pointer motion and Dw
 # Named mode recipe: uncomment the definitions above, then replace the four
 # action values with named forms such as these. Every scratchpad action needs a
 # configured name once named mode is active.
-# "Mod+Shift+Space" = "window-move-to-scratchpad:terminal"
-# "Mod+Space" = "scratchpad-toggle:terminal"
-# "Mod+Ctrl+Space" = "window-restore-from-scratchpad:terminal"
+"Mod+Shift+0" = "window-move-to-scratchpad:terminal"
+"Mod+0" = "scratchpad-toggle:terminal"
+"Mod+Ctrl+0" = "window-restore-from-scratchpad:terminal"
 # "Mod+Tab" = "scratchpad-focus-next:terminal"
 # "Mod+Ctrl+Shift+M" = "window-toggle-scratchpad:music"
 # "Mod+Ctrl+M" = "scratchpad-toggle:music"
@@ -482,9 +482,9 @@ follows_mouse = false                           # Focus on pointer motion and Dw
 
 # Media and brightness
 # Documentation: https://docs.noctalia.dev/umbriel/keybinds/#example-media-and-brightness-keys
-"XF86AudioPlay" = "spawn:playerctl play-pause"
-"XF86AudioNext" = "spawn:playerctl next"
-"XF86AudioPrev" = "spawn:playerctl previous"
+"XF86AudioPlay" = "spawn:noctalia msg media toggle"
+"XF86AudioNext" = "spawn:noctalia msg media next"
+"XF86AudioPrev" = "spawn:noctalia msg media previous"
 "XF86AudioRaiseVolume" = "spawn:noctalia msg volume-up"
 "XF86AudioLowerVolume" = "spawn:noctalia msg volume-down"
 "XF86AudioMute" = "spawn:noctalia msg volume-mute"
@@ -568,13 +568,22 @@ default_pinned = true
 match.app_id = "^org.keepassxc.KeePassXC$"
 default_floating = true
 
-# Firefox notifications
-# [[window_rule]]
-# match.app_id = "^firefox"
-# match.title = "^$"
-# default_floating = true
-# default_focused = false
-# default_position = { x = 0, y = 0, anchor = "bottom_right" }
+[[window_rule]]
+match.app_id = "^org.gnome.NautilusPreviewer$"
+default_floating = true
+
+[[window_rule]]
+match.app_id = "^firefox"
+match.title = "^Library$"
+default_floating = true
+
+# Firefox notifications indicated by empty title
+[[window_rule]]
+match.app_id = "^firefox"
+match.title = "^$"
+default_floating = true
+default_focused = false
+default_position = { x = 5, y = 5, anchor = "top_right" }
 
 # Optional positional placement recipe. Output names follow the same rules as
 # [output.*]. `default_output` scopes the workspace lookup to that output, and

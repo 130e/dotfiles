@@ -25,7 +25,7 @@
   :config
   ;; Fonts
   (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
-  (set-face-attribute 'variable-pitch nil :family "Iosevka Aile" :height 1.0)
+  (set-face-attribute 'variable-pitch nil :family "Iosevka Etoile" :height 1.0)
   (set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
   ;; UI chrome
   (menu-bar-mode   0)
@@ -91,8 +91,8 @@
   :config
   (setq
    ;; Edit settings
-   org-auto-align-tags nil
-   org-tags-column 0
+   ;; org-auto-align-tags nil
+   ;; org-tags-column 0
    org-catch-invisible-edits 'show-and-error
    org-special-ctrl-a/e t
    org-insert-heading-respect-content t
@@ -100,10 +100,10 @@
    org-hide-emphasis-markers t
    org-hide-drawer-startup t
    org-pretty-entities t
-   org-agenda-tags-column 0
-   org-ellipsis "…"
+   ;; org-agenda-tags-column 0
+   ;; org-ellipsis "…"
    ;; Fold show empty if at least 1 line
-   org-cycle-separator-lines 1
+   ;; org-cycle-separator-lines 1
 
    ;; Agenda and todos
    org-agenda-files '("~/RoamNotes/"
@@ -115,24 +115,19 @@
    org-log-repeat 'time
    ;; Agenda schedule
    org-agenda-span 'day
-   org-agenda-start-on-weekday nil
-   ;; org-agenda-time-grid '((daily today require-timed remove-match)
-   ;;                      (600 700 900 1200 1400 1800 2100)
-   ;;                      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   ;; org-agenda-current-time-string "⭠ now ─────────"
-   org-agenda-skip-scheduled-if-done t
-   org-agenda-skip-deadline-if-done t
-   ;; (org-agenda-start-with-log-mode t)  ; uncomment to see completions by default
-   ;; Default agenda sort leads with `habit-down', which parks every habit
-   ;; below the timeline regardless of its hour.  Drop it so habits sort by
-   ;; time along with everything else.
+   org-agenda-time-grid '((daily today require-timed remove-match)
+                        (600 700 900 1200 1400 1800 2100)
+                        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string "⭠ now ─────────"
+   ;; org-agenda-skip-scheduled-if-done t
+   ;; org-agenda-skip-deadline-if-done t
    org-agenda-sorting-strategy
    '((agenda time-up urgency-down category-keep)
      (todo urgency-down category-keep)
      (tags urgency-down category-keep)
      (search category-keep))
-   org-habit-graph-column 60
-   org-habit-show-habits-only-for-today t
+   ;; org-habit-graph-column 60
+   ;; org-habit-show-habits-only-for-today t
    org-agenda-custom-commands
    '(("d" "Day"
       ((agenda "")
@@ -154,7 +149,20 @@
    org-refile-use-outline-path 'file
    org-outline-path-complete-in-steps nil
    org-refile-allow-creating-parent-nodes 'confirm)
-  (require 'org-habit))
+  (require 'org-habit)
+  ;; Babel: evaluate graphviz (and shell/elisp) blocks, show results inline
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((dot        . t)
+     (emacs-lisp . t)
+     (shell      . t)))
+  ;; skip confirm y/n
+  (defun my/org-confirm-babel-evaluate (lang _body)
+    (not (member lang '("dot" "emacs-lisp"))))
+  (setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate
+        org-startup-with-inline-images t
+        org-image-actual-width '(600))
+  (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
 
 ;;; Extensions
 (use-package org-modern
@@ -165,52 +173,50 @@
   (org-modern-star 'replace))
 
 (use-package org-roam
-  :preface
-  ;; `org-roam-dailies-goto-*' forwards its template key to org-capture, so with
-  ;; more than one template it pops the template menu just to visit a file.
-  (defun my/org-roam-dailies-goto-today ()
-    (interactive)
-    (org-roam-dailies-goto-today "n"))
-  (defun my/org-roam-dailies-goto-yesterday (n)
-    (interactive "p")
-    (org-roam-dailies-goto-yesterday n "n"))
-  (defun my/org-roam-dailies-goto-tomorrow (n)
-    (interactive "p")
-    (org-roam-dailies-goto-tomorrow n "n"))
-  (defun my/org-roam-dailies-goto-date ()
-    (interactive)
-    (org-roam-dailies-goto-date nil "n"))
+  ;; :preface
+  ;; (defun my/org-roam-dailies-goto-today ()
+  ;;   (interactive)
+  ;;   (org-roam-dailies-goto-today "n"))
+  ;; (defun my/org-roam-dailies-goto-yesterday (n)
+  ;;   (interactive "p")
+  ;;   (org-roam-dailies-goto-yesterday n "n"))
+  ;; (defun my/org-roam-dailies-goto-tomorrow (n)
+  ;;   (interactive "p")
+  ;;   (org-roam-dailies-goto-tomorrow n "n"))
+  ;; (defun my/org-roam-dailies-goto-date ()
+  ;;   (interactive)
+  ;;   (org-roam-dailies-goto-date nil "n"))
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
-  (org-roam-dailies-capture-templates
-   '(("n" "note" entry "* %?"
-      :target (file+head "%<%Y-%m-%d>.org"
-			 "#+title: %<%Y-%m-%d>\n")
-      :empty-lines 1
-      :unnarrowed t)
-     ("m" "meeting" entry "* Meeting: %^{with} :meeting:\n%?"
-      :target (file+head "%<%Y-%m-%d>.org"
-			 "#+title: %<%Y-%m-%d>\n")
-      :empty-lines 1
-      :unnarrowed t)))
+  ;; (org-roam-dailies-capture-templates
+  ;;  '(("n" "note" entry "* %?"
+  ;;     :target (file+head "%<%Y-%m-%d>.org"
+  ;; 			 "#+title: %<%Y-%m-%d>\n")
+  ;;     :empty-lines 1
+  ;;     :unnarrowed t)
+  ;;    ("m" "meeting" entry "* Meeting: %^{with} :meeting:\n%?"
+  ;;     :target (file+head "%<%Y-%m-%d>.org"
+  ;; 			 "#+title: %<%Y-%m-%d>\n")
+  ;;     :empty-lines 1
+  ;;     :unnarrowed t)))
   (org-roam-mode-sections
    '(org-roam-backlinks-section
      org-roam-reflinks-section))
   :bind (("C-c f" . org-roam-node-find)
-         ;; ("C-c x" . org-roam-capture)
+         ("C-c n c" . org-roam-capture)
 	 ("C-c n l" . org-roam-buffer-toggle)
-	 ;; ("C-c n g" . org-roam-graph)
+	 ("C-c n g" . org-roam-graph)
 	 ("C-c n n" . org-id-get-create)
          ("C-c n i" . org-roam-node-insert)
 	 ;; Move a daily subtree/region into an existing node, or out to a new one.
 	 ("C-c n r" . org-roam-refile)
 	 ("C-c n e" . org-roam-extract-subtree)
-         ("C-c j c" . org-roam-dailies-capture-today)
-	 ("C-c j t" . my/org-roam-dailies-goto-today)
-	 ("C-c j y" . my/org-roam-dailies-goto-yesterday)
-	 ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
-	 ("C-c j d" . my/org-roam-dailies-goto-date)
-	 ("C-c j D" . org-roam-dailies-find-directory))
+         ("C-c j c" . org-roam-dailies-capture-today))
+	 ;; ("C-c j t" . my/org-roam-dailies-goto-today)
+	 ;; ("C-c j y" . my/org-roam-dailies-goto-yesterday)
+	 ;; ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
+	 ;; ("C-c j d" . my/org-roam-dailies-goto-date)
+	 ;; ("C-c j D" . org-roam-dailies-find-directory)
   :config
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
@@ -284,16 +290,27 @@
   :hook (pdf-view-mode . pdf-view-roll-minor-mode)  ; pageless continuous scroll
   :custom
   (pdf-view-continuous t)
+  ;; SyncTeX backward search (click in the PDF -> jump to the source).
+  ;; `pdf-sync-backward-search' hands this to `pop-to-buffer' as its ACTION,
+  ;; and unset it just splits the PDF's own frame.  reuse-window with
+  ;; `reusable-frames' hands the jump to whatever frame already shows that
+  ;; source buffer; pop-up-frame only kicks in when no frame does.
+  (pdf-sync-backward-display-action
+   '((display-buffer-reuse-window display-buffer-pop-up-frame)
+     (reusable-frames . visible)
+     (inhibit-same-window . t)))
   :config (pdf-loader-install))
 
-;; Show the compiled PDF in a dedicated half-width window on the right,
-;; instead of taking over the source window.
+;; Show the compiled PDF in a separate frame, instead of taking over the
+;; source window.  reuse-window with `reusable-frames' picks up the frame
+;; from the previous compile, so re-running C-c C-c does not pile up frames.
 (add-to-list 'display-buffer-alist
              '((derived-mode . pdf-view-mode)
-               (display-buffer-reuse-window display-buffer-in-side-window)
-               (side . right)
-               (window-width . 0.5)
-               (dedicated . t)))
+               (display-buffer-reuse-window display-buffer-pop-up-frame)
+               (reusable-frames . visible)
+               (inhibit-same-window . t)
+	       (inhibit-switch-frame . t)
+	       (dedicated . t)))
 
 (setq org-preview-latex-default-process 'dvisvgm)
 ;; (plist-put org-format-latex-options :scale 1.3)
@@ -309,12 +326,12 @@
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 
 ;; Themes
-;; (use-package doom-themes
-;;   :config
-;;   (load-theme 'doom-one t))
-(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
-  (add-to-list 'custom-theme-load-path desktop-theme-dir)
-  (load-theme 'noctalia t))
+(use-package doom-themes
+  :config
+  (load-theme 'doom-one t))
+;; (let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
+;;   (add-to-list 'custom-theme-load-path desktop-theme-dir)
+;;   (load-theme 'noctalia t))
 
 (use-package vertico
   :custom
@@ -381,8 +398,7 @@
   :config
   (global-diff-hl-mode)
   (diff-hl-flydiff-mode)
-  (unless (display-graphic-p)
-    (diff-hl-margin-mode)))
+  (unless (display-graphic-p) (diff-hl-margin-mode)))
 
 ;; Note: Tramp do not load env from profile
 ;; Force tramp to check path

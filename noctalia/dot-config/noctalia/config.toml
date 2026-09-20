@@ -14,10 +14,10 @@ font_family = "Iosevka Aile"
 
 [theme]
 builtin = "Catppuccin"
-mode = "auto"
+# mode = "auto"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "emacs", "gtk3", "gtk4", "niri", "umbriel" ]
+    builtin_ids = [ "gtk3", "gtk4", "niri", "umbriel" ]
 
 [weather]
 unit = "imperial"

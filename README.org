@@ -2,22 +2,44 @@
 
 ** Configs
 
-Example usage:
+Every top-level directory is a [[https://www.gnu.org/software/stow/][GNU Stow]] package that mirrors =~=, with =dot-=
+standing in for a leading dot:
+
+#+begin_example
+  niri/dot-config/niri/config.kdl  ->  ~/.config/niri/config.kdl
+  emacs/dot-emacs.d/init.el        ->  ~/.emacs.d/init.el
+#+end_example
+
+=.stowrc= sets =--dotfiles= to do that translation. Stow's own defaults cover
+the rest: =--dir= is the current directory, =--target= its parent, so this
+works as long as the repo lives at =~/dotfiles=.
+
+Deploy everything at once:
 
 #+begin_src shell
-  cd dotfiles/
-  # Dry run
-  stow -n -v emacs
-  # Deploy
-  stow emacs             # add .emacs.d/* to ~
-  stow -t ~/.config niri # add niri/ to ~/.config
-
-  # remove symlink
-  stow -t ~/.config -D niri
+  cd ~/dotfiles
+  make check      # dry run
+  make deploy     # symlink all packages into ~
+  make undeploy   # remove those symlinks
+  make redeploy   # unstow then stow, to prune stale links
+  make list       # show which packages were detected
 #+end_src
 
-+ Skip =-t= if layout is =~/dotfiles=.
-+ Use =--adopt= to gather files from current config. This is from *target* to *source*.
+The package list is derived from the directory listing, so a new package
+needs no bookkeeping -- just create =foo/dot-config/foo/=. Directories named
+in =EXCLUDE= in the =Makefile= are skipped.
+
+Single package, when you don't want the whole set:
+
+#+begin_src shell
+  stow -n -v emacs   # dry run
+  stow emacs
+  stow -D emacs      # remove symlink
+#+end_src
+
+Use =--adopt= to gather existing files from the live config into the repo.
+This moves content from *target* to *source*, then links it back, so commit
+first and diff afterwards.
 
 ** Portages
 

@@ -46,8 +46,8 @@
         ring-bell-function                    'ignore
         visible-bell                          nil
         inhibit-startup-message               t
-	initial-major-mode                    'org-mode
-	initial-scratch-message               "* Scratch\n"
+	;; initial-major-mode                    'org-mode
+	;; initial-scratch-message               "* Scratch\n"
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
 	vc-follow-symlinks t)
   ;; Editing behaviour
@@ -91,8 +91,6 @@
   :config
   (setq
    ;; Edit settings
-   ;; org-auto-align-tags nil
-   ;; org-tags-column 0
    org-catch-invisible-edits 'show-and-error
    org-special-ctrl-a/e t
    org-insert-heading-respect-content t
@@ -100,10 +98,9 @@
    org-hide-emphasis-markers t
    org-hide-drawer-startup t
    org-pretty-entities t
-   ;; org-agenda-tags-column 0
    ;; org-ellipsis "…"
    ;; Fold show empty if at least 1 line
-   ;; org-cycle-separator-lines 1
+   org-cycle-separator-lines 1
 
    ;; Agenda and todos
    org-agenda-files '("~/RoamNotes/"
@@ -142,13 +139,16 @@
       "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
      ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
       "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
-     ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
-      "* TODO %?\n%U\n%a" :empty-lines 1))
+     ;; ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
+     ;;  "* TODO %?\n%U\n%a" :empty-lines 1)
+     )
    ;; Refile: complete on outline paths, not timestamped file names
    org-refile-targets '((org-agenda-files :maxlevel . 2))
    org-refile-use-outline-path 'file
    org-outline-path-complete-in-steps nil
    org-refile-allow-creating-parent-nodes 'confirm)
+  ;; ends setq
+  (add-hook 'org-capture-mode-hook 'delete-other-windows)
   (require 'org-habit)
   ;; Babel: evaluate graphviz (and shell/elisp) blocks, show results inline
   (org-babel-do-load-languages

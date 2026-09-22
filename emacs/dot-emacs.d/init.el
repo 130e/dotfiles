@@ -11,13 +11,13 @@
 (use-package emacs
   :demand t
   :bind (("C-z" . undo)
-	 ("C-S-z" . undo-redo))
-  :hook
-  ((emacs-lisp-mode . outline-minor-mode)
-   (prog-mode       . display-line-numbers-mode)
-   (prog-mode       . my/set-trailing-whitespace)
-   (org-mode        . my/set-trailing-whitespace)
-   (text-mode       . visual-line-mode))
+	 ("C-S-z" . undo-redo)
+	 ("C-x f" . find-file))
+  :hook ((emacs-lisp-mode . outline-minor-mode)
+	 (prog-mode       . display-line-numbers-mode)
+	 (prog-mode       . my/set-trailing-whitespace)
+	 (org-mode        . my/set-trailing-whitespace)
+	 (text-mode       . visual-line-mode))
   :init
   (defun my/set-trailing-whitespace ()
     "Show trailing whitespace in the current buffer."
@@ -89,66 +89,71 @@
    ("C-c c" . org-capture)
    ("C-c l" . org-store-link))
   :config
-  (setq
-   ;; Edit settings
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-hide-drawer-startup t
-   org-pretty-entities t
-   ;; org-ellipsis "…"
-   ;; Fold show empty if at least 1 line
-   org-cycle-separator-lines 1
+  (setq org-catch-invisible-edits 'show-and-error
+	org-special-ctrl-a/e t
+	org-insert-heading-respect-content t
+	org-hide-emphasis-markers t
+	org-hide-drawer-startup t
+	org-pretty-entities t
+	;; org-ellipsis "…"
+	org-cycle-separator-lines 1 ;; Fold show empty if at least 1 line
+	org-return-follows-link t ;; RET open link
+	)
+  ;; Agenda and todos
+  (setq org-agenda-files '("~/RoamNotes/inbox.org"
+			   "~/RoamNotes/life.org"
+			   "~/RoamNotes/routine.org"
+			   "~/RoamNotes/projects/")
+	org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|"
+			      "DONE(d!)" "CANCELLED(c@)"))
+	;; Default archive to a datetree, filed by their CLOSED date.
+	;; Can be overriden per file with "#+ARCHIVE: ::* Archive".
+	org-archive-location "~/RoamNotes/archive.org::datetree/"
+	org-log-done 'time
+	org-log-into-drawer t
+	org-log-repeat 'time
+	org-agenda-span 'day
+	org-agenda-time-grid '((daily today require-timed remove-match)
+                               (600 700 900 1200 1400 1800 2100)
+                               " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+	org-agenda-current-time-string "⭠ now ─────────"
+	org-agenda-sorting-strategy
+	'((agenda time-up urgency-down category-keep)
+	  (todo urgency-down category-keep)
+	  (tags urgency-down category-keep)
+	  (search category-keep))
+	org-agenda-custom-commands
+	'(("d" "Day"
+	   ((agenda "")
+	    (todo "TODO" ((org-agenda-overriding-header "Unscheduled")
+			  (org-agenda-skip-function
+			   '(org-agenda-skip-entry-if 'scheduled 'deadline))))))
+	  ("r" "Review: what did I actually do (last 7 days)"
+	   ((agenda "" ((org-agenda-span 7)
+			(org-agenda-start-day "-7d")
+			(org-agenda-start-with-log-mode t)
+			(org-agenda-log-mode-items '(closed clock state))
+			(org-agenda-archives-mode t))))))
+	org-capture-templates
+	'(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
+	   "* TODO %?\n%U" :empty-lines 1)
+	  ("s" "Scheduled todo" entry (file "~/RoamNotes/inbox.org")
+	   "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
+	  ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
+	   "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
+	  ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
+	   "* TODO %?\n%U\n%a" :empty-lines 1)
+	  )
+	;; Refile: complete on outline paths, not timestamped file names
+	org-refile-targets '((org-agenda-files :maxlevel . 3))
+	org-refile-use-outline-path 'file
+	org-outline-path-complete-in-steps nil
+	org-refile-allow-creating-parent-nodes 'confirm
+	)
+  ;; org-timer
+  (add-to-list 'org-modules 'org-timer)
+  (setq org-timer-default-timer 25)
 
-   ;; Agenda and todos
-   org-agenda-files '("~/RoamNotes/"
-		      "~/RoamNotes/daily/")
-   org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELLED(c@)"))
-   org-log-done 'time
-   org-log-into-drawer t
-   ;; Repeater log
-   org-log-repeat 'time
-   ;; Agenda schedule
-   org-agenda-span 'day
-   org-agenda-time-grid '((daily today require-timed remove-match)
-                        (600 700 900 1200 1400 1800 2100)
-                        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   org-agenda-current-time-string "⭠ now ─────────"
-   ;; org-agenda-skip-scheduled-if-done t
-   ;; org-agenda-skip-deadline-if-done t
-   org-agenda-sorting-strategy
-   '((agenda time-up urgency-down category-keep)
-     (todo urgency-down category-keep)
-     (tags urgency-down category-keep)
-     (search category-keep))
-   ;; org-habit-graph-column 60
-   ;; org-habit-show-habits-only-for-today t
-   org-agenda-custom-commands
-   '(("d" "Day"
-      ((agenda "")
-       (todo "TODO" ((org-agenda-overriding-header "Unscheduled")
-                   (org-agenda-skip-function
-                    '(org-agenda-skip-entry-if 'scheduled 'deadline)))))))
-   ;; Capture: undated TODOs land in inbox.org; schedule when the date is known
-   org-capture-templates
-   '(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
-      "* TODO %?\n%U" :empty-lines 1)
-     ("s" "Scheduled todo" entry (file "~/RoamNotes/inbox.org")
-      "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
-     ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
-      "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
-     ;; ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
-     ;;  "* TODO %?\n%U\n%a" :empty-lines 1)
-     )
-   ;; Refile: complete on outline paths, not timestamped file names
-   org-refile-targets '((org-agenda-files :maxlevel . 2))
-   org-refile-use-outline-path 'file
-   org-outline-path-complete-in-steps nil
-   org-refile-allow-creating-parent-nodes 'confirm)
-  ;; ends setq
-  (add-hook 'org-capture-mode-hook 'delete-other-windows)
   (require 'org-habit)
   ;; Babel: evaluate graphviz (and shell/elisp) blocks, show results inline
   (org-babel-do-load-languages
@@ -162,7 +167,48 @@
   (setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate
         org-startup-with-inline-images t
         org-image-actual-width '(600))
-  (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
+  :hook (('org-capture-mode . delete-other-windows)
+	 ('org-babel-after-execute . org-redisplay-inline-images))
+  )
+
+;;;; GTD: clocking + capture straight into a project node
+(with-eval-after-load 'org
+  ;; Clocking is what makes "when/where did I do this" answerable later.
+  ;; C-c C-x C-i clock in, C-c C-x C-o out, C-c C-x C-j jump to running clock.
+  (setq org-clock-persist 'history
+        org-clock-in-resume t
+        org-clock-into-drawer t
+        org-clock-out-remove-zero-time-clocks t
+        org-clock-report-include-clocking-task t)
+  (org-clock-persistence-insinuate)
+
+  (defun my/capture-target-project-log ()
+    "Put point under the `Log' subtree of an interactively chosen project node.
+Projects are the file-level org-roam nodes tagged :project: -- i.e. the
+files in ~/RoamNotes/projects/.  Completion is on the node title, not the
+file name."
+    (let ((node (org-roam-node-read
+                 nil
+                 (lambda (n) (and (= 0 (org-roam-node-level n))
+                                  (member "project" (org-roam-node-tags n))))
+                 nil t "Project: ")))
+      (set-buffer (org-capture-target-buffer (org-roam-node-file node)))
+      (widen)
+      (goto-char (point-min))
+      (let ((m (org-find-exact-headline-in-buffer "Log")))
+        (if m
+            (goto-char m)
+          (goto-char (point-max))
+          (unless (bolp) (insert "\n"))
+          (insert "* Log\n")
+          (forward-line -1)))))
+
+  (add-to-list 'org-capture-templates
+               '("m" "Meeting (into a project)" entry
+                 (function my/capture-target-project-log)
+                 "* %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
+                 :empty-lines 1 :clock-in t :clock-resume t)
+               t))
 
 ;;; Extensions
 (use-package org-modern
@@ -355,6 +401,12 @@
   (shell-command-on-region
    start end
    "pandoc -f markdown -t org --wrap=none" t t))
+
+(defun my/org-unroll-region (start end)
+  (interactive "r")
+  (shell-command-on-region
+   start end
+   "pandoc -f org -t org --wrap=none" t t))
 
 ;; IDE
 (use-package company

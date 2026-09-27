@@ -22,7 +22,7 @@ builtin = "Dracula"
 mode = "auto"
 
     [theme.templates]
-    builtin_ids = [ "btop", "gtk3", "gtk4", "niri", "umbriel" ]
+    builtin_ids = [ "btop", "emacs", "gtk3", "gtk4", "niri", "umbriel" ]
 
 [weather]
 unit = "imperial"

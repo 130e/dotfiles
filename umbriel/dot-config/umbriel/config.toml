@@ -38,7 +38,8 @@ files = []                                      # Example: ["~/.config/umbriel/n
 autostart = ["noctalia",
              "gentoo-pipewire-launcher restart",
 	     "fcitx5 -d --replace",
-	     "kdeconnect-indicator"]
+	     "kdeconnect-indicator",
+	     "emacs --fg-daemon"]
 xwayland = true                                 # Requires xwayland-satellite; restart to change
 show_cheatsheet = false                         # Show the keybind overlay on startup
 focus_on_activate = false                       # Do not let unsolicited requests steal focus
@@ -94,6 +95,10 @@ honor_restored_maximize = false                 # Honor restored maximized state
 # sdr_white = 203                               # SDR reference white in cd/m2 during HDR
 # workspaces = 5                                # Anonymous fixed positions; omit for dynamic
 # workspace_axis = "horizontal"                 # vertical or horizontal workspace arrangement
+
+[output.DP-1]
+enabled = true
+mode = "1920x1080@60"
 
 # Replace the count with ["WEB", "CHAT", "MEDIA"] for named static workspaces,
 # or with "dynamic" to state the dynamic default explicitly. A dynamic output
@@ -227,7 +232,7 @@ track_layout = "global"                         # global, or window for per-surf
 
 [input.touchpad]
 tap = true                                      # Tap-to-click
-natural_scroll = true                           # Omit to preserve the libinput default
+natural_scroll = false                           # Omit to preserve the libinput default
 # accel_profile = "adaptive"                    # flat, adaptive, or custom <step> <points...>
 # sensitivity = 0.5                             # Pointer speed, -1.0 to 1.0
 # scroll_factor = 1.5                           # Two-finger scroll multiplier, 0.1-10.0
@@ -421,9 +426,9 @@ name = "terminal"
 # Named mode recipe: uncomment the definitions above, then replace the four
 # action values with named forms such as these. Every scratchpad action needs a
 # configured name once named mode is active.
-"Mod+Shift+0" = "window-move-to-scratchpad:terminal"
+"Mod+Ctrl+0" = "window-move-to-scratchpad:terminal"
 "Mod+0" = "scratchpad-toggle:terminal"
-"Mod+Ctrl+0" = "window-restore-from-scratchpad:terminal"
+"Mod+Shift+0" = "window-restore-from-scratchpad:terminal"
 # "Mod+Tab" = "scratchpad-focus-next:terminal"
 # "Mod+Ctrl+Shift+M" = "window-toggle-scratchpad:music"
 # "Mod+Ctrl+M" = "scratchpad-toggle:music"

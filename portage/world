@@ -1,4 +1,5 @@
 app-admin/doas
+app-admin/emacs-updater
 app-admin/keepassxc
 app-admin/stow
 app-admin/sysklogd
@@ -12,7 +13,6 @@ app-editors/vscode
 app-emacs/auctex
 app-emacs/company-mode
 app-emacs/diff-hl
-app-emacs/doom-themes
 app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
@@ -21,7 +21,6 @@ app-emacs/org-modern
 app-emacs/org-roam
 app-emacs/pdf-tools
 app-emacs/vertico
-app-emacs/vterm
 app-emacs/which-key
 app-eselect/eselect-java
 app-eselect/eselect-repository
@@ -48,13 +47,13 @@ dev-java/openjdk
 dev-lang/go
 dev-lang/python
 dev-libs/tree-sitter-meta
+dev-python/curl-cffi
 dev-python/python-lsp-black
 dev-python/python-lsp-server
 dev-tex/latexmk
 dev-texlive/texlive-latexextra
 dev-texlive/texlive-mathscience
 dev-texlive/texlive-publishers
-dev-util/android-tools
 dev-util/claude-code
 dev-vcs/git
 games-util/gamemode

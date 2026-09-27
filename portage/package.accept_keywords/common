@@ -1,3 +1,7 @@
 app-admin/keepassxc
 app-emacs/doom-themes
 app-emacs/org-roam
+
+# yt-dlp extras
+net-misc/curl-impersonate
+dev-python/curl-cffi

@@ -1,13 +1,14 @@
-;; My emacs' config
+;;; init.el --- My Emacs config  -*- lexical-binding: t; -*-
 (setq custom-file (locate-user-emacs-file "custom.el"))
 (load custom-file :no-error-if-file-is-missing)
 
+;;; Package management
 (use-package package
   :ensure nil
   :config
   (setq use-package-always-ensure nil))
 
-;;;; General emacs options
+;;; General Emacs options
 (use-package emacs
   :demand t
   :bind (("C-z" . undo)
@@ -67,7 +68,7 @@
   ;; diff
   (setq diff-font-lock-syntax nil))
 
-;;;; Dired
+;;; Dired
 (use-package dired
   :ensure nil
   :config
@@ -82,7 +83,7 @@
   (setq dired-create-destination-dirs-on-trailing-dirsep t)
   (setq wdired-create-parent-directories t))
 
-;; org
+;;; Org
 (use-package org
   :bind
   (("C-c a" . org-agenda)
@@ -105,7 +106,7 @@
 			   "~/RoamNotes/routine.org"
 			   "~/RoamNotes/projects/")
 	org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|"
-			      "DONE(d!)" "CANCELLED(c@)"))
+				      "DONE(d!)" "CANCELLED(c@)"))
 	;; Default archive to a datetree, filed by their CLOSED date.
 	;; Can be overriden per file with "#+ARCHIVE: ::* Archive".
 	org-archive-location "~/RoamNotes/archive.org::datetree/"
@@ -210,7 +211,7 @@ file name."
                  :empty-lines 1 :clock-in t :clock-resume t)
                t))
 
-;;; Extensions
+;;;; Org extensions
 (use-package org-modern
   :hook
   ((org-mode . org-modern-mode)
@@ -258,11 +259,11 @@ file name."
 	 ("C-c n r" . org-roam-refile)
 	 ("C-c n e" . org-roam-extract-subtree)
          ("C-c j c" . org-roam-dailies-capture-today))
-	 ;; ("C-c j t" . my/org-roam-dailies-goto-today)
-	 ;; ("C-c j y" . my/org-roam-dailies-goto-yesterday)
-	 ;; ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
-	 ;; ("C-c j d" . my/org-roam-dailies-goto-date)
-	 ;; ("C-c j D" . org-roam-dailies-find-directory)
+  ;; ("C-c j t" . my/org-roam-dailies-goto-today)
+  ;; ("C-c j y" . my/org-roam-dailies-goto-yesterday)
+  ;; ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
+  ;; ("C-c j d" . my/org-roam-dailies-goto-date)
+  ;; ("C-c j D" . org-roam-dailies-find-directory)
   :config
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
@@ -274,6 +275,7 @@ file name."
                (window-width . 0.33)
                (window-parameters . ((no-delete-other-windows . t)))))
 
+;;; Markdown
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
   :init (setq markdown-command "pandoc")
@@ -282,7 +284,7 @@ file name."
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 
-;; Tex LaTex
+;;; TeX / LaTeX
 ;; TODO: review fix
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
@@ -331,6 +333,7 @@ file name."
                  TeX-run-command nil (LaTeX-mode docTeX-mode)
                  :help "Remove every latexmk-generated file, including the PDF (-C)")))
 
+;;;; PDF viewing
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :hook (pdf-view-mode . pdf-view-roll-minor-mode)  ; pageless continuous scroll
@@ -358,6 +361,7 @@ file name."
 	       (inhibit-switch-frame . t)
 	       (dedicated . t)))
 
+;;;; Org LaTeX preview
 (setq org-preview-latex-default-process 'dvisvgm)
 ;; (plist-put org-format-latex-options :scale 1.3)
 (setq org-startup-with-latex-preview t)           ; or #+STARTUP: latexpreview per file
@@ -371,14 +375,24 @@ file name."
     (apply orig args)))
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 
-;; Themes
-(use-package doom-themes
-  :config
-  (load-theme 'doom-one t))
-;; (let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
-;;   (add-to-list 'custom-theme-load-path desktop-theme-dir)
-;;   (load-theme 'noctalia t))
+;;; Themes
+;; (use-package doom-themes
+;;   :config
+;;   (load-theme 'doom-one t)
+;;   ;; Emacs 31's defface makes `gnus-group-news-low' inherit
+;;   ;; `gnus-group-news-low-empty', and doom-themes makes the latter inherit the
+;;   ;; former.  doom's spec for news-low only matches via `min-colors', so a new
+;;   ;; frame falls back to the defface spec and `make-frame' (hence
+;;   ;; `emacsclient -c') fails with an inheritance cycle once gnus is loaded.
+;;   (custom-theme-set-faces
+;;    'user
+;;    `(gnus-group-news-low
+;;      ((t (:inherit gnus-group-mail-1 :foreground ,(doom-color 'base5)))))))
+(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
+  (add-to-list 'custom-theme-load-path desktop-theme-dir)
+  (load-theme 'noctalia t))
 
+;;; Minibuffer completion and key hints
 (use-package vertico
   :custom
   (vertico-resize t)
@@ -396,6 +410,7 @@ file name."
   :config
   (which-key-mode +1))
 
+;;; Helper commands
 (defun my/markdown-to-org-region (start end)
   (interactive "r")
   (shell-command-on-region
@@ -408,14 +423,14 @@ file name."
    start end
    "pandoc -f org -t org --wrap=none" t t))
 
-;; IDE
+;;; IDE
 (use-package company
   :init
   (global-company-mode)
   :config
   (setq company-dabbrev-other-buffers t))
 
-;; Tree sitter
+;;;; Tree-sitter
 ;; Remap built-in modes
 (dolist (entry '((python-mode  python-ts-mode  python)
                  (c-mode       c-ts-mode       c)
@@ -431,13 +446,13 @@ file name."
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
 (add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
 
-;; eglot
+;;;; Eglot
 (add-hook 'python-base-mode-hook #'eglot-ensure)
 (add-hook 'c-ts-mode-hook #'eglot-ensure)
 (add-hook 'c++-ts-mode-hook #'eglot-ensure)
 (add-hook 'go-ts-mode-hook #'eglot-ensure)
 
-;; vcs git diff
+;;; Version control
 (use-package magit
   :bind ("C-x g" . magit-status)
   :config
@@ -445,13 +460,13 @@ file name."
 
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode)
-         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         ;; (magit-pre-refresh . diff-hl-magit-pre-refresh)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config
-  (global-diff-hl-mode)
-  (diff-hl-flydiff-mode)
-  (unless (display-graphic-p) (diff-hl-margin-mode)))
+  ;; (global-diff-hl-mode)
+  (diff-hl-flydiff-mode))
 
+;;; TRAMP
 ;; Note: Tramp do not load env from profile
 ;; Force tramp to check path
 (with-eval-after-load 'tramp

@@ -8,6 +8,7 @@ app-arch/unrar
 app-arch/zip
 app-crypt/mit-krb5
 app-editors/emacs
+app-editors/helix
 app-editors/nano
 app-editors/vscode
 app-emacs/auctex
@@ -68,7 +69,9 @@ kde-misc/kdeconnect
 llvm-core/clang
 media-fonts/fira-code
 media-fonts/iosevka
+media-fonts/noto
 media-fonts/noto-cjk
+media-fonts/noto-emoji
 media-fonts/ubuntu-font-family
 media-gfx/graphviz
 media-libs/libv4l
@@ -101,6 +104,7 @@ sys-fs/ntfs3g
 sys-process/btop
 sys-process/cronie
 www-client/firefox
+x11-libs/libnotify
 x11-misc/sddm
 x11-terms/alacritty
 x11-terms/kitty

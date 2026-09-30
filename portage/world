@@ -1,4 +1,4 @@
-app-admin/doas
+acct-group/android
 app-admin/emacs-updater
 app-admin/keepassxc
 app-admin/stow
@@ -14,6 +14,8 @@ app-editors/vscode
 app-emacs/auctex
 app-emacs/company-mode
 app-emacs/diff-hl
+app-emacs/edit-indirect
+app-emacs/kaolin-themes
 app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
@@ -51,6 +53,7 @@ dev-libs/tree-sitter-meta
 dev-python/curl-cffi
 dev-python/python-lsp-black
 dev-python/python-lsp-server
+dev-python/uv
 dev-tex/latexmk
 dev-texlive/texlive-latexextra
 dev-texlive/texlive-mathscience
@@ -77,6 +80,8 @@ media-gfx/graphviz
 media-libs/libv4l
 media-sound/cava
 media-sound/strawberry
+media-sound/timidity++
+media-sound/timidity-freepats
 media-video/mpv
 net-analyzer/openbsd-netcat
 net-analyzer/tcpdump

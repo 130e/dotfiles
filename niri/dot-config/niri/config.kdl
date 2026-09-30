@@ -393,7 +393,8 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
     Mod+Space hotkey-overlay-title="Run an Application" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+S { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
-
+    Mod+N { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications";}
+    Mod+Shift+E { spawn "noctalia" "msg" "panel-toggle" "session";}
 
     Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
     Mod+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
@@ -651,7 +652,7 @@ binds {
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // The quit action will show a confirmation dialog to avoid accidental exits.
-    Mod+Shift+E { quit; }
+    // Mod+Shift+E { quit; }
 
     // Powers off the monitors. To turn them back on, do any input like
     // moving the mouse or pressing any other key.

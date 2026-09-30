@@ -59,7 +59,6 @@
   ;; Session persistence
   (setq auto-revert-verbose nil
         history-length      25
-	;; update bookmark file whenever changes are made
 	bookmark-save-flag 1)
   (auto-revert-mode 1)
   (recentf-mode     1)
@@ -72,7 +71,7 @@
 (use-package dired
   :ensure nil
   :config
-  ;; (setq dired-kill-when-opening-new-dired-buffer t)
+  (setq dired-kill-when-opening-new-dired-buffer t)
   (setq dired-auto-revert-buffer #'dired-directory-changed-p)
   (setq dired-clean-up-buffers-too t)
   (setq dired-clean-confirm-killing-deleted-buffers t)
@@ -82,6 +81,39 @@
   (setq dired-create-destination-dirs 'ask)
   (setq dired-create-destination-dirs-on-trailing-dirsep t)
   (setq wdired-create-parent-directories t))
+
+;;; Project
+;; Lowercase runs the project command here, uppercase in a new frame
+;; (the one-key equivalent of C-x 5 p <key>).
+(use-package project
+  :ensure nil
+  :bind (("C-c f" . project-find-file)
+	 ("C-c F" . my/project-find-file-other-frame)
+	 ("C-c b" . project-switch-to-buffer)
+	 ("C-c B" . my/project-switch-to-buffer-other-frame)
+	 ("C-c d" . project-find-dir)
+	 ("C-c D" . my/project-find-dir-other-frame)
+	 ("C-c e" . project-eshell)
+	 ("C-c E" . my/project-eshell-other-frame)
+	 ("C-c p" . project-switch-project)
+	 ("C-c P" . my/project-switch-project-other-frame)
+	 ("C-c k" . project-kill-buffers))
+  :init
+  (defmacro my/define-project-other-frame (command)
+    "Define `my/COMMAND-other-frame', running COMMAND in a new frame."
+    `(defun ,(intern (format "my/%s-other-frame" command)) ()
+       ,(format "Run `%s', displaying its buffer in a new frame." command)
+       (interactive)
+       (let ((switch-to-buffer-obey-display-actions t)
+             (display-buffer-overriding-action
+              '((display-buffer-pop-up-frame) (inhibit-same-window . t))))
+         (call-interactively #',command))))
+  (my/define-project-other-frame project-find-file)
+  (my/define-project-other-frame project-switch-to-buffer)
+  (my/define-project-other-frame project-find-dir)
+  (my/define-project-other-frame project-eshell)
+  (my/define-project-other-frame project-switch-project))
+
 
 ;;; Org
 (use-package org
@@ -185,9 +217,7 @@
 
   (defun my/capture-target-project-log ()
     "Put point under the `Log' subtree of an interactively chosen project node.
-Projects are the file-level org-roam nodes tagged :project: -- i.e. the
-files in ~/RoamNotes/projects/.  Completion is on the node title, not the
-file name."
+Projects are the file-level org-roam nodes tagged :project:"
     (let ((node (org-roam-node-read
                  nil
                  (lambda (n) (and (= 0 (org-roam-node-level n))
@@ -249,16 +279,15 @@ file name."
   (org-roam-mode-sections
    '(org-roam-backlinks-section
      org-roam-reflinks-section))
-  :bind (("C-c f" . org-roam-node-find)
+  :bind (("C-c n f" . org-roam-node-find)
          ("C-c n c" . org-roam-capture)
 	 ("C-c n l" . org-roam-buffer-toggle)
 	 ("C-c n g" . org-roam-graph)
 	 ("C-c n n" . org-id-get-create)
          ("C-c n i" . org-roam-node-insert)
-	 ;; Move a daily subtree/region into an existing node, or out to a new one.
+         ("C-c n j" . org-roam-dailies-capture-today)
 	 ("C-c n r" . org-roam-refile)
-	 ("C-c n e" . org-roam-extract-subtree)
-         ("C-c j c" . org-roam-dailies-capture-today))
+	 ("C-c n e" . org-roam-extract-subtree))
   ;; ("C-c j t" . my/org-roam-dailies-goto-today)
   ;; ("C-c j y" . my/org-roam-dailies-goto-yesterday)
   ;; ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
@@ -285,7 +314,6 @@ file name."
   (markdown-header-scaling t))
 
 ;;; TeX / LaTeX
-;; TODO: review fix
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
          (LaTeX-mode . TeX-source-correlate-mode)
@@ -376,21 +404,14 @@ file name."
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 
 ;;; Themes
-;; (use-package doom-themes
-;;   :config
-;;   (load-theme 'doom-one t)
-;;   ;; Emacs 31's defface makes `gnus-group-news-low' inherit
-;;   ;; `gnus-group-news-low-empty', and doom-themes makes the latter inherit the
-;;   ;; former.  doom's spec for news-low only matches via `min-colors', so a new
-;;   ;; frame falls back to the defface spec and `make-frame' (hence
-;;   ;; `emacsclient -c') fails with an inheritance cycle once gnus is loaded.
-;;   (custom-theme-set-faces
-;;    'user
-;;    `(gnus-group-news-low
-;;      ((t (:inherit gnus-group-mail-1 :foreground ,(doom-color 'base5)))))))
-(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
-  (add-to-list 'custom-theme-load-path desktop-theme-dir)
-  (load-theme 'noctalia t))
+;; (let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
+;;   (add-to-list 'custom-theme-load-path desktop-theme-dir)
+;;   (load-theme 'noctalia t))
+(use-package kaolin-themes
+  :config
+  ;; (load-theme 'kaolin-light t)
+  (load-theme 'kaolin-dark t)
+  )
 
 ;;; Minibuffer completion and key hints
 (use-package vertico
@@ -460,10 +481,10 @@ file name."
 
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode)
+	 (latex-mode . diff-hl-mode)
          ;; (magit-pre-refresh . diff-hl-magit-pre-refresh)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config
-  ;; (global-diff-hl-mode)
   (diff-hl-flydiff-mode))
 
 ;;; TRAMP

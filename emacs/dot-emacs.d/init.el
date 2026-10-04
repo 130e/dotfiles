@@ -176,6 +176,10 @@
 	   "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
 	  ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
 	   "* TODO %?\n%U\n%a" :empty-lines 1)
+	  ;; Meetings land in the inbox too; refile to a project during review.
+	  ("m" "Meeting" entry (file "~/RoamNotes/inbox.org")
+	   "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
+	   :empty-lines 1 :clock-in t :clock-resume t)
 	  )
 	;; Refile: complete on outline paths, not timestamped file names
 	org-refile-targets '((org-agenda-files :maxlevel . 3))
@@ -194,7 +198,6 @@
    '((dot        . t)
      (emacs-lisp . t)
      (shell      . t)))
-  ;; skip confirm y/n
   (defun my/org-confirm-babel-evaluate (lang _body)
     (not (member lang '("dot" "emacs-lisp"))))
   (setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate
@@ -204,7 +207,7 @@
 	 ('org-babel-after-execute . org-redisplay-inline-images))
   )
 
-;;;; GTD: clocking + capture straight into a project node
+;;;; GTD: clocking
 (with-eval-after-load 'org
   ;; Clocking is what makes "when/where did I do this" answerable later.
   ;; C-c C-x C-i clock in, C-c C-x C-o out, C-c C-x C-j jump to running clock.
@@ -213,33 +216,7 @@
         org-clock-into-drawer t
         org-clock-out-remove-zero-time-clocks t
         org-clock-report-include-clocking-task t)
-  (org-clock-persistence-insinuate)
-
-  (defun my/capture-target-project-log ()
-    "Put point under the `Log' subtree of an interactively chosen project node.
-Projects are the file-level org-roam nodes tagged :project:"
-    (let ((node (org-roam-node-read
-                 nil
-                 (lambda (n) (and (= 0 (org-roam-node-level n))
-                                  (member "project" (org-roam-node-tags n))))
-                 nil t "Project: ")))
-      (set-buffer (org-capture-target-buffer (org-roam-node-file node)))
-      (widen)
-      (goto-char (point-min))
-      (let ((m (org-find-exact-headline-in-buffer "Log")))
-        (if m
-            (goto-char m)
-          (goto-char (point-max))
-          (unless (bolp) (insert "\n"))
-          (insert "* Log\n")
-          (forward-line -1)))))
-
-  (add-to-list 'org-capture-templates
-               '("m" "Meeting (into a project)" entry
-                 (function my/capture-target-project-log)
-                 "* %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
-                 :empty-lines 1 :clock-in t :clock-resume t)
-               t))
+  (org-clock-persistence-insinuate))
 
 ;;;; Org extensions
 (use-package org-modern
@@ -250,32 +227,8 @@ Projects are the file-level org-roam nodes tagged :project:"
   (org-modern-star 'replace))
 
 (use-package org-roam
-  ;; :preface
-  ;; (defun my/org-roam-dailies-goto-today ()
-  ;;   (interactive)
-  ;;   (org-roam-dailies-goto-today "n"))
-  ;; (defun my/org-roam-dailies-goto-yesterday (n)
-  ;;   (interactive "p")
-  ;;   (org-roam-dailies-goto-yesterday n "n"))
-  ;; (defun my/org-roam-dailies-goto-tomorrow (n)
-  ;;   (interactive "p")
-  ;;   (org-roam-dailies-goto-tomorrow n "n"))
-  ;; (defun my/org-roam-dailies-goto-date ()
-  ;;   (interactive)
-  ;;   (org-roam-dailies-goto-date nil "n"))
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
-  ;; (org-roam-dailies-capture-templates
-  ;;  '(("n" "note" entry "* %?"
-  ;;     :target (file+head "%<%Y-%m-%d>.org"
-  ;; 			 "#+title: %<%Y-%m-%d>\n")
-  ;;     :empty-lines 1
-  ;;     :unnarrowed t)
-  ;;    ("m" "meeting" entry "* Meeting: %^{with} :meeting:\n%?"
-  ;;     :target (file+head "%<%Y-%m-%d>.org"
-  ;; 			 "#+title: %<%Y-%m-%d>\n")
-  ;;     :empty-lines 1
-  ;;     :unnarrowed t)))
   (org-roam-mode-sections
    '(org-roam-backlinks-section
      org-roam-reflinks-section))
@@ -285,14 +238,10 @@ Projects are the file-level org-roam nodes tagged :project:"
 	 ("C-c n g" . org-roam-graph)
 	 ("C-c n n" . org-id-get-create)
          ("C-c n i" . org-roam-node-insert)
-         ("C-c n j" . org-roam-dailies-capture-today)
 	 ("C-c n r" . org-roam-refile)
-	 ("C-c n e" . org-roam-extract-subtree))
-  ;; ("C-c j t" . my/org-roam-dailies-goto-today)
-  ;; ("C-c j y" . my/org-roam-dailies-goto-yesterday)
-  ;; ("C-c j T" . my/org-roam-dailies-goto-tomorrow)
-  ;; ("C-c j d" . my/org-roam-dailies-goto-date)
-  ;; ("C-c j D" . org-roam-dailies-find-directory)
+	 ("C-c n e" . org-roam-extract-subtree)
+         ("C-c n j" . org-roam-dailies-capture-today)
+	 ("C-c n J" . my/org-roam-dailies-goto-today))
   :config
   (org-roam-db-autosync-mode)
   (require 'org-roam-protocol))
@@ -317,14 +266,7 @@ Projects are the file-level org-roam nodes tagged :project:"
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
          (LaTeX-mode . TeX-source-correlate-mode)
-         (LaTeX-mode . LaTeX-math-mode)
-         (LaTeX-mode . my/LaTeX-prefer-latexmk))
-  :init
-  ;; `LaTeX-mode' ends its body with (setq TeX-command-default "LaTeX"), and
-  ;; that setting is buffer-local, so customizing the global value has no
-  ;; effect.  Override it from `LaTeX-mode-hook', which runs afterwards.
-  (defun my/LaTeX-prefer-latexmk ()
-    (setq TeX-command-default "LaTeXMk"))
+         (LaTeX-mode . LaTeX-math-mode))
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
@@ -333,33 +275,12 @@ Projects are the file-level org-roam nodes tagged :project:"
   (reftex-plug-into-AUCTeX t))
 
 ;; AUCTeX defers loading, and nothing pulls in the `auctex' feature itself,
-;; so hang the extra setup off `tex' -- that is where TeX-command-list and
-;; TeX-after-compilation-finished-functions actually live.
+;; so hang the extra setup off `tex' -- that is where
+;; TeX-after-compilation-finished-functions actually lives.
 (with-eval-after-load 'tex
   ;; Refresh the PDF buffer after every successful compile.
   (add-hook 'TeX-after-compilation-finished-functions
-            #'TeX-revert-document-buffer)
-
-  ;; ...but that hook is only run by `TeX-LaTeX-sentinel', and the stock
-  ;; LaTeXMk entry runs `TeX-run-format', whose sentinel is
-  ;; `TeX-TeX-sentinel' -- which does not run it, so the PDF window keeps
-  ;; showing the stale file.  `TeX-run-TeX' is `TeX-run-format' plus the
-  ;; major mode's own sentinel, i.e. `TeX-LaTeX-sentinel' here.
-  (setf (nth 2 (assoc "LaTeXMk" TeX-command-list)) #'TeX-run-TeX)
-
-  ;; Extra latexmk entries, offered in the C-c C-c completion list.
-  ;; "LaTeXMk Force" ignores latexmk's .fdb_latexmk cache; use it after
-  ;; fixing something outside the source tree (installing a TeX package,
-  ;; a path, a .bst) that latexmk cannot notice on its own.
-  (add-to-list 'TeX-command-list
-               '("LaTeXMk Force" "latexmk -g %(latexmk-out) %(file-line-error) \
-%`%(extraopts) %S%(mode)%' %t"
-                 TeX-run-TeX nil (LaTeX-mode docTeX-mode)
-                 :help "Run LaTeXMk, forcing a full rebuild (-g)"))
-  (add-to-list 'TeX-command-list
-               '("LaTeXMk Clean" "latexmk -C %t"
-                 TeX-run-command nil (LaTeX-mode docTeX-mode)
-                 :help "Remove every latexmk-generated file, including the PDF (-C)")))
+            #'TeX-revert-document-buffer))
 
 ;;;; PDF viewing
 (use-package pdf-tools
@@ -409,8 +330,8 @@ Projects are the file-level org-roam nodes tagged :project:"
 ;;   (load-theme 'noctalia t))
 (use-package kaolin-themes
   :config
-  ;; (load-theme 'kaolin-light t)
-  (load-theme 'kaolin-dark t)
+  (load-theme 'kaolin-light t)
+  ;; (load-theme 'kaolin-dark t)
   )
 
 ;;; Minibuffer completion and key hints
@@ -481,7 +402,7 @@ Projects are the file-level org-roam nodes tagged :project:"
 
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode)
-	 (latex-mode . diff-hl-mode)
+	 (LaTeX-mode . diff-hl-mode)
          ;; (magit-pre-refresh . diff-hl-magit-pre-refresh)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config

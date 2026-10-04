@@ -10,7 +10,6 @@ app-crypt/mit-krb5
 app-editors/emacs
 app-editors/helix
 app-editors/nano
-app-editors/vscode
 app-emacs/auctex
 app-emacs/company-mode
 app-emacs/diff-hl
@@ -85,6 +84,7 @@ media-sound/timidity-freepats
 media-video/mpv
 net-analyzer/openbsd-netcat
 net-analyzer/tcpdump
+net-analyzer/wireshark
 net-im/telegram-desktop
 net-misc/chrony
 net-misc/iperf

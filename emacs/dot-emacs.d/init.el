@@ -13,16 +13,13 @@
   :demand t
   :bind (("C-z" . undo)
 	 ("C-S-z" . undo-redo)
-	 ("C-x f" . find-file))
+	 ("C-x f" . find-file)
+	 ("C-c 5" . other-frame-prefix))
   :hook ((emacs-lisp-mode . outline-minor-mode)
 	 (prog-mode       . display-line-numbers-mode)
 	 (prog-mode       . my/set-trailing-whitespace)
 	 (org-mode        . my/set-trailing-whitespace)
 	 (text-mode       . visual-line-mode))
-  :init
-  (defun my/set-trailing-whitespace ()
-    "Show trailing whitespace in the current buffer."
-    (setq-local show-trailing-whitespace t))
   :config
   ;; Fonts
   (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
@@ -49,6 +46,7 @@
         inhibit-startup-message               t
 	;; initial-major-mode                    'org-mode
 	;; initial-scratch-message               "* Scratch\n"
+	initial-buffer-choice                 "~/RoamNotes/inbox.org"
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
 	vc-follow-symlinks t)
   ;; Editing behaviour
@@ -85,43 +83,46 @@
 ;;; Project
 ;; Lowercase runs the project command here, uppercase in a new frame
 ;; (the one-key equivalent of C-x 5 p <key>).
-(use-package project
-  :ensure nil
-  :bind (("C-c f" . project-find-file)
-	 ("C-c F" . my/project-find-file-other-frame)
-	 ("C-c b" . project-switch-to-buffer)
-	 ("C-c B" . my/project-switch-to-buffer-other-frame)
-	 ("C-c d" . project-find-dir)
-	 ("C-c D" . my/project-find-dir-other-frame)
-	 ("C-c e" . project-eshell)
-	 ("C-c E" . my/project-eshell-other-frame)
-	 ("C-c p" . project-switch-project)
-	 ("C-c P" . my/project-switch-project-other-frame)
-	 ("C-c k" . project-kill-buffers))
-  :init
-  (defmacro my/define-project-other-frame (command)
-    "Define `my/COMMAND-other-frame', running COMMAND in a new frame."
-    `(defun ,(intern (format "my/%s-other-frame" command)) ()
-       ,(format "Run `%s', displaying its buffer in a new frame." command)
-       (interactive)
-       (let ((switch-to-buffer-obey-display-actions t)
-             (display-buffer-overriding-action
-              '((display-buffer-pop-up-frame) (inhibit-same-window . t))))
-         (call-interactively #',command))))
-  (my/define-project-other-frame project-find-file)
-  (my/define-project-other-frame project-switch-to-buffer)
-  (my/define-project-other-frame project-find-dir)
-  (my/define-project-other-frame project-eshell)
-  (my/define-project-other-frame project-switch-project))
+;; (use-package project
+;;   :ensure nil
+;;   :bind (("C-c f" . project-find-file)
+;; 	 ("C-c F" . my/project-find-file-other-frame)
+;; 	 ("C-c b" . project-switch-to-buffer)
+;; 	 ("C-c B" . my/project-switch-to-buffer-other-frame)
+;; 	 ("C-c d" . project-find-dir)
+;; 	 ("C-c D" . my/project-find-dir-other-frame)
+;; 	 ("C-c e" . project-eshell)
+;; 	 ("C-c E" . my/project-eshell-other-frame)
+;; 	 ("C-c p" . project-switch-project)
+;; 	 ("C-c P" . my/project-switch-project-other-frame)
+;; 	 ("C-c k" . project-kill-buffers))
+;;   :init
+;;   (defmacro my/define-project-other-frame (command)
+;;     "Define `my/COMMAND-other-frame', running COMMAND in a new frame."
+;;     `(defun ,(intern (format "my/%s-other-frame" command)) ()
+;;        ,(format "Run `%s', displaying its buffer in a new frame." command)
+;;        (interactive)
+;;        (let ((switch-to-buffer-obey-display-actions t)
+;;              (display-buffer-overriding-action
+;;               '((display-buffer-pop-up-frame) (inhibit-same-window . t))))
+;;          (call-interactively #',command))))
+;;   (my/define-project-other-frame project-find-file)
+;;   (my/define-project-other-frame project-switch-to-buffer)
+;;   (my/define-project-other-frame project-find-dir)
+;;   (my/define-project-other-frame project-eshell)
+;;   (my/define-project-other-frame project-switch-project))
 
 
 ;;; Org
 (use-package org
+  ;; Load eagerly for org-protocol
+  :demand t
   :bind
   (("C-c a" . org-agenda)
    ("C-c c" . org-capture)
    ("C-c l" . org-store-link))
   :config
+  (require 'org-protocol)
   (setq org-catch-invisible-edits 'show-and-error
 	org-special-ctrl-a/e t
 	org-insert-heading-respect-content t
@@ -176,6 +177,8 @@
 	   "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
 	  ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
 	   "* TODO %?\n%U\n%a" :empty-lines 1)
+	  ("w" "Quote selected text and link" entry (file "~/RoamNotes/inbox.org")
+	   "* %:description\n%U\n%:link\n\n#+begin_quote\n%i\n#+end_quote\n%?" :empty-lines 1)
 	  ;; Meetings land in the inbox too; refile to a project during review.
 	  ("m" "Meeting" entry (file "~/RoamNotes/inbox.org")
 	   "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
@@ -204,7 +207,8 @@
         org-startup-with-inline-images t
         org-image-actual-width '(600))
   :hook (('org-capture-mode . delete-other-windows)
-	 ('org-babel-after-execute . org-redisplay-inline-images))
+	 ('org-babel-after-execute . org-redisplay-inline-images)
+	 ('org-capture-after-finalize . my/del-temp-frame))
   )
 
 ;;;; GTD: clocking
@@ -227,6 +231,7 @@
   (org-modern-star 'replace))
 
 (use-package org-roam
+  :demand t ;; org-roam-protocol
   :custom
   (org-roam-directory (file-truename "~/RoamNotes"))
   (org-roam-mode-sections
@@ -244,7 +249,11 @@
 	 ("C-c n J" . my/org-roam-dailies-goto-today))
   :config
   (org-roam-db-autosync-mode)
-  (require 'org-roam-protocol))
+  (require 'org-roam-protocol)
+  (setq org-roam-capture-ref-templates
+      '(("w" "ref" plain "#+begin_quote\n${body}\n#+end_quote\n%?"
+         :target (file+head "${slug}.org" "#+title: ${title}")
+         :unnarrowed t))))
 
 (add-to-list 'display-buffer-alist
              '("\\*org-roam\\*"
@@ -364,6 +373,15 @@
   (shell-command-on-region
    start end
    "pandoc -f org -t org --wrap=none" t t))
+
+(defun my/set-trailing-whitespace ()
+  "Show trailing whitespace in the current buffer."
+  (setq-local show-trailing-whitespace t))
+
+(defun my/del-temp-frame ()
+  "Delete frame if its frame title matches."
+  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
+    (delete-frame)))
 
 ;;; IDE
 (use-package company

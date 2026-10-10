@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Emacsclient (org-protocol)
+Comment=Custom org-protocol handler (gentoo bug 950674, upstream bug 74467)
+NoDisplay=true
+Categories=Other;
+Keywords=org-protocol;
+Exec=/usr/bin/emacsclient -c -F "((name . \\"emacs-temp-frame\\"))" %u
+Terminal=false
+StartupWMClass=Emacs
+MimeType=x-scheme-handler/org-protocol;

@@ -26,7 +26,7 @@
 files = []                                      # Example: ["appearance.toml", "outputs.toml"]
 
 [include.optional]
-files = ["noctalia.toml"]                                      # Example: ["~/.config/umbriel/noctalia.toml"]
+files = []                                      # Example: ["~/.config/umbriel/noctalia.toml"]
 
 # ─────────────────────────────── General ────────────────────────────────────
 # Configure startup commands, session behavior, environment variables, and

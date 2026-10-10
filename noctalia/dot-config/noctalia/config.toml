@@ -14,6 +14,9 @@ auto_locate = true
 [notification]
 history_retention_hours = 24
 
+[osd.kinds]
+keyboard_layout = false
+
 [shell]
 font_family = "Iosevka Aile"
 
@@ -22,7 +25,7 @@ builtin = "Dracula"
 mode = "auto"
 
     [theme.templates]
-    builtin_ids = [ "btop", "gtk3", "gtk4", "niri", "umbriel" ]
+    builtin_ids = [ "gtk3", "gtk4", "niri"]
 
 [weather]
 unit = "imperial"

@@ -48,7 +48,8 @@
 	;; initial-scratch-message               "* Scratch\n"
 	initial-buffer-choice                 "~/RoamNotes/inbox.org"
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
-	vc-follow-symlinks t)
+	vc-follow-symlinks                    t
+	pixel-scroll-mode                     t)
   ;; Editing behaviour
   ;; (cua-mode              1)
   (show-paren-mode       1)
@@ -339,9 +340,54 @@
 ;;   (load-theme 'noctalia t))
 (use-package kaolin-themes
   :config
-  (load-theme 'kaolin-light t)
-  ;; (load-theme 'kaolin-dark t)
-  )
+  (load-theme 'kaolin-dark t))
+
+;;; Better prose reading experiences inspired by Nano-emacs
+;; Thin type; "bold" becomes only one step heavier
+(set-face-attribute 'default nil :weight 'light)
+(set-face-attribute 'bold nil :weight 'regular)
+
+(defun my/apply-chrome (&rest _)
+  (let ((bg     (face-background 'default))
+        (subtle (face-background 'mode-line-inactive nil t))
+        (rule   (face-foreground 'shadow nil t)))
+    (dolist (f '(internal-border window-divider fringe
+                 window-divider-first-pixel window-divider-last-pixel))
+      (set-face-attribute f nil :background bg :foreground bg))
+    ;; Mode line collapsed to a thin rule
+    (dolist (f '(mode-line mode-line-inactive))
+      (set-face-attribute f nil :height 0.1 :box nil :overline nil
+                          :foreground bg :background bg :underline rule))
+    ;; Status bar lives in the header line instead
+    (set-face-attribute 'header-line nil :background subtle :box nil
+                        :underline nil :inherit nil)
+    ))
+
+(my/apply-chrome)
+(add-hook 'enable-theme-functions #'my/apply-chrome)
+
+(setq x-underline-at-descent-line t)
+(setq-default mode-line-format ""
+              header-line-format
+              '(" " (:propertize "%b" face bold) "  (" mode-name ")"
+                (:eval (propertize " " 'display '(space :align-to (- right 8))))
+                "%l:%c"))
+
+(defface my-strong '((t :weight medium)) "Structural text: default colour, one step heavier.")
+
+(with-eval-after-load 'outline
+  (dolist (n (number-sequence 1 8))
+    (set-face-attribute (intern (format "outline-%d" n)) nil
+                        :inherit 'my-strong :foreground 'unspecified)))
+
+(with-eval-after-load 'markdown-mode
+  (set-face-attribute 'markdown-header-face nil
+                      :inherit 'my-strong :foreground 'unspecified :weight 'unspecified))
+
+(with-eval-after-load 'org
+  (cl-loop for (face . height) in '((org-level-1 . 1.4) (org-level-2 . 1.25)
+                                    (org-level-3 . 1.15) (org-level-4 . 1.1))
+           do (set-face-attribute face nil :height height)))
 
 ;;; Minibuffer completion and key hints
 (use-package vertico

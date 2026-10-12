@@ -260,7 +260,11 @@
 
 (use-package calfw)
 (use-package calfw-org
-  :after calfw)
+  :after calfw
+  :bind
+  (("C-c m" . calfw-org-open-calendar))
+  :config
+  (setq calfw-org-overwrite-default-keybinding t))
 
 (use-package org-roam
   :demand t ;; org-roam-protocol

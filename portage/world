@@ -11,6 +11,7 @@ app-editors/emacs
 app-editors/helix
 app-editors/nano
 app-emacs/auctex
+app-emacs/calfw
 app-emacs/company-mode
 app-emacs/diff-hl
 app-emacs/edit-indirect
@@ -18,7 +19,6 @@ app-emacs/kaolin-themes
 app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
-app-emacs/orderless
 app-emacs/org-modern
 app-emacs/org-roam
 app-emacs/pdf-tools
@@ -60,13 +60,11 @@ dev-texlive/texlive-publishers
 dev-util/claude-code
 dev-vcs/git
 games-util/gamemode
-games-util/heroic-bin
 games-util/steam-launcher
 gnome-base/nautilus
 gui-apps/noctalia
 gui-apps/xwayland-satellite
 gui-wm/niri
-gui-wm/umbriel
 kde-misc/kdeconnect
 llvm-core/clang
 media-fonts/fira-code

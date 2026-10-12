@@ -104,39 +104,6 @@
   (setq wdired-create-parent-directories t)
   (setopt dired-mouse-drag-files t))
 
-;;; Project
-;; Lowercase runs the project command here, uppercase in a new frame
-;; (the one-key equivalent of C-x 5 p <key>).
-;; (use-package project
-;;   :ensure nil
-;;   :bind (("C-c f" . project-find-file)
-;; 	 ("C-c F" . my/project-find-file-other-frame)
-;; 	 ("C-c b" . project-switch-to-buffer)
-;; 	 ("C-c B" . my/project-switch-to-buffer-other-frame)
-;; 	 ("C-c d" . project-find-dir)
-;; 	 ("C-c D" . my/project-find-dir-other-frame)
-;; 	 ("C-c e" . project-eshell)
-;; 	 ("C-c E" . my/project-eshell-other-frame)
-;; 	 ("C-c p" . project-switch-project)
-;; 	 ("C-c P" . my/project-switch-project-other-frame)
-;; 	 ("C-c k" . project-kill-buffers))
-;;   :init
-;;   (defmacro my/define-project-other-frame (command)
-;;     "Define `my/COMMAND-other-frame', running COMMAND in a new frame."
-;;     `(defun ,(intern (format "my/%s-other-frame" command)) ()
-;;        ,(format "Run `%s', displaying its buffer in a new frame." command)
-;;        (interactive)
-;;        (let ((switch-to-buffer-obey-display-actions t)
-;;              (display-buffer-overriding-action
-;;               '((display-buffer-pop-up-frame) (inhibit-same-window . t))))
-;;          (call-interactively #',command))))
-;;   (my/define-project-other-frame project-find-file)
-;;   (my/define-project-other-frame project-switch-to-buffer)
-;;   (my/define-project-other-frame project-find-dir)
-;;   (my/define-project-other-frame project-eshell)
-;;   (my/define-project-other-frame project-switch-project))
-
-
 ;;; Org
 (use-package org
   ;; Load eagerly for org-protocol
@@ -170,7 +137,7 @@
 	org-log-done 'time
 	org-log-into-drawer t
 	org-log-repeat 'time
-	;; org-agenda-span 'day
+	org-agenda-span 'day
 	org-agenda-start-on-weekday 0
 	calendar-week-start-day 0
 	org-agenda-show-all-dates nil
@@ -184,18 +151,6 @@
 	  (todo urgency-down category-keep)
 	  (tags urgency-down category-keep)
 	  (search category-keep))
-	org-agenda-custom-commands
-	'(("d" "Day"
-	   ((agenda "")
-	    (todo "TODO" ((org-agenda-overriding-header "Unscheduled")
-			  (org-agenda-skip-function
-			   '(org-agenda-skip-entry-if 'scheduled 'deadline))))))
-	  ("r" "Review: what did I actually do (last 7 days)"
-	   ((agenda "" ((org-agenda-span 7)
-			(org-agenda-start-day "-7d")
-			(org-agenda-start-with-log-mode t)
-			(org-agenda-log-mode-items '(closed clock state))
-			(org-agenda-archives-mode t))))))
 	org-capture-templates
 	'(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
 	   "* TODO %?\n%U" :empty-lines 1)

@@ -19,7 +19,10 @@
 	 (prog-mode       . display-line-numbers-mode)
 	 (prog-mode       . my/set-trailing-whitespace)
 	 (org-mode        . my/set-trailing-whitespace)
-	 (text-mode       . visual-line-mode))
+	 (text-mode       . visual-line-mode)
+	 (text-mode       . flyspell-mode)
+	 (prog-mode       . flyspell-prog-mode)
+	 (prog-mode       . flymake-mode))
   :config
   ;; Fonts
   (set-face-attribute 'default        nil :family "Iosevka"        :height 130)
@@ -49,7 +52,26 @@
 	initial-buffer-choice                 "~/RoamNotes/inbox.org"
         backup-directory-alist                `(("." . ,(locate-user-emacs-file "backup-files/")))
 	vc-follow-symlinks                    t
-	pixel-scroll-mode                     t)
+	indent-tabs-mode nil
+	pixel-scroll-mode                     t
+	imenu-auto-rescan    t
+	view-read-only       t
+	repeat-mode        t
+	frame-resize-pixelwise t
+	window-resize-pixelwise t
+	frame-inhibit-implied-resize t
+	browse-url-browser-function 'browse-url-firefox
+	global-xref-mouse-mode t
+	completion-styles '(basic partial-completion emacs22 flex)
+	;; mostly benign since vertico is used
+	minibuffer-visible-completions t
+	completions-detailed t
+	completions-group t
+	completion-auto-select 'second-tab
+	completion-eager-update t
+	global-completion-preview-mode t
+	shell-command-prompt-show-cwd t
+	)
   ;; Editing behaviour
   ;; (cua-mode              1)
   (show-paren-mode       1)
@@ -71,7 +93,7 @@
   :ensure nil
   :config
   (setq dired-kill-when-opening-new-dired-buffer t)
-  (setq dired-auto-revert-buffer #'dired-directory-changed-p)
+  (setq dired-auto-revert-buffer t)
   (setq dired-clean-up-buffers-too t)
   (setq dired-clean-confirm-killing-deleted-buffers t)
   (setq dired-recursive-copies 'always)
@@ -79,7 +101,8 @@
   (setq delete-by-moving-to-trash t)
   (setq dired-create-destination-dirs 'ask)
   (setq dired-create-destination-dirs-on-trailing-dirsep t)
-  (setq wdired-create-parent-directories t))
+  (setq wdired-create-parent-directories t)
+  (setopt dired-mouse-drag-files t))
 
 ;;; Project
 ;; Lowercase runs the project command here, uppercase in a new frame
@@ -147,7 +170,11 @@
 	org-log-done 'time
 	org-log-into-drawer t
 	org-log-repeat 'time
-	org-agenda-span 'day
+	;; org-agenda-span 'day
+	org-agenda-start-on-weekday 0
+	calendar-week-start-day 0
+	org-agenda-show-all-dates nil
+	org-agenda-compact-blocks t
 	org-agenda-time-grid '((daily today require-timed remove-match)
                                (600 700 900 1200 1400 1800 2100)
                                " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
@@ -230,6 +257,10 @@
    (org-agenda-finalize . org-modern-agenda))
   :custom
   (org-modern-star 'replace))
+
+(use-package calfw)
+(use-package calfw-org
+  :after calfw)
 
 (use-package org-roam
   :demand t ;; org-roam-protocol
@@ -340,7 +371,7 @@
 ;;   (load-theme 'noctalia t))
 (use-package kaolin-themes
   :config
-  (load-theme 'kaolin-dark t))
+  (load-theme 'kaolin-temple t))
 
 ;;; Better prose reading experiences inspired by Nano-emacs
 ;; Thin type; "bold" becomes only one step heavier
@@ -400,12 +431,9 @@
 (use-package marginalia
   :config (marginalia-mode 1))
 
-(use-package orderless
-  :config (setq completion-styles '(orderless basic)))
-
 (use-package which-key
   :config
-  (which-key-mode +1))
+  (which-key-mode 1))
 
 ;;; Helper commands
 (defun my/markdown-to-org-region (start end)

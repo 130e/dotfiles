@@ -19,6 +19,7 @@ app-emacs/kaolin-themes
 app-emacs/magit
 app-emacs/marginalia
 app-emacs/markdown-mode
+app-emacs/orderless
 app-emacs/org-modern
 app-emacs/org-roam
 app-emacs/pdf-tools
@@ -50,6 +51,8 @@ dev-lang/go
 dev-lang/python
 dev-libs/tree-sitter-meta
 dev-python/curl-cffi
+dev-python/matplotlib
+dev-python/numpy
 dev-python/python-lsp-black
 dev-python/python-lsp-server
 dev-python/uv

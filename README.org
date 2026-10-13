@@ -1,5 +1,7 @@
 * Personal dotfiles
 
+*Archived branch for future reference. Moved main to literate config.*
+
 ** Configs
 
 Every top-level directory is a [[https://www.gnu.org/software/stow/][GNU Stow]] package that mirrors =~=, with =dot-= standing in for a leading dot:
@@ -28,6 +30,4 @@ The package list is derived from the directory listing.
 ** Portages
 
 Use script to diff the config. Do not symlink configs.
-
-** TODO Use section based (json?) config like nix
 

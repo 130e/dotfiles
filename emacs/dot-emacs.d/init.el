@@ -62,14 +62,13 @@
 	frame-inhibit-implied-resize t
 	browse-url-browser-function 'browse-url-firefox
 	global-xref-mouse-mode t
-	completion-styles '(basic partial-completion emacs22 flex)
-	;; mostly benign since vertico is used
-	minibuffer-visible-completions t
-	completions-detailed t
-	completions-group t
-	completion-auto-select 'second-tab
-	completion-eager-update t
-	global-completion-preview-mode t
+	;; completion-styles '(basic partial-completion emacs22 flex)
+	;; minibuffer-visible-completions t
+	;; completions-detailed t
+	;; completions-group t
+	;; completion-auto-select 'second-tab
+	;; completion-eager-update t
+	;; global-completion-preview-mode t
 	shell-command-prompt-show-cwd t
 	)
   ;; Editing behaviour
@@ -262,6 +261,32 @@
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t))
 
+;;; fonts
+(defun my/fixed-pitch-faces (&rest faces)
+  "Make FACES inherit `fixed-pitch', keeping their existing inheritance."
+  (dolist (face faces)
+    (let ((old (face-attribute face :inherit nil)))
+      (set-face-attribute
+       face nil :inherit
+       (cons 'fixed-pitch
+             (remq 'fixed-pitch
+                   (if (eq old 'unspecified) nil (ensure-list old))))))))
+
+(add-hook 'org-mode-hook #'variable-pitch-mode)
+(add-hook 'markdown-mode-hook #'variable-pitch-mode)
+
+(with-eval-after-load 'org
+  (my/fixed-pitch-faces
+   'org-table 'org-formula 'org-code 'org-verbatim 'org-block
+   'org-meta-line 'org-special-keyword 'org-property-value 'org-drawer
+   'org-document-info-keyword 'org-checkbox 'org-date))
+
+(with-eval-after-load 'org-indent
+  (my/fixed-pitch-faces 'org-indent))
+
+(with-eval-after-load 'org-modern
+  (my/fixed-pitch-faces 'org-modern-label 'org-modern-symbol))
+
 ;;; TeX / LaTeX
 (use-package auctex
   :hook ((LaTeX-mode . turn-on-reftex)
@@ -312,7 +337,7 @@
 
 ;;;; Org LaTeX preview
 (setq org-preview-latex-default-process 'dvisvgm)
-;; (plist-put org-format-latex-options :scale 1.3)
+(plist-put org-format-latex-options :scale 1.3)
 (setq org-startup-with-latex-preview t)           ; or #+STARTUP: latexpreview per file
 ;; (setq org-highlight-latex-and-related '(native latex script entities))
 
@@ -330,7 +355,7 @@
 ;;   (load-theme 'noctalia t))
 (use-package kaolin-themes
   :config
-  (load-theme 'kaolin-temple t))
+  (load-theme 'kaolin-mono-light t))
 
 ;;; Better prose reading experiences inspired by Nano-emacs
 ;; Thin type; "bold" becomes only one step heavier
@@ -422,6 +447,12 @@
   (global-company-mode)
   :config
   (setq company-dabbrev-other-buffers t))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-pcm-leading-wildcard t))
 
 ;;;; Tree-sitter
 ;; Remap built-in modes

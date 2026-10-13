@@ -1,33 +1,13 @@
-* Personal dotfiles
+* Dotfiles
 
-** Configs
+This repo tracks my personal computers' /literate/ configurations.
 
-Every top-level directory is a [[https://www.gnu.org/software/stow/][GNU Stow]] package that mirrors =~=, with =dot-= standing in for a leading dot:
+Basically every config snippet is written as org source block. Open each config file in emacs (now I am literate). Next execute =C-c C-v t= (org-babel-tangle) to write into specified locations.
 
-#+begin_example
-  niri/dot-config/niri/config.kdl  ->  ~/.config/niri/config.kdl
-  emacs/dot-emacs.d/init.el        ->  ~/.emacs.d/init.el
-#+end_example
+- Double-check target path before running.
+- It overwrites.
+- Property lines are read when the file opens. After editing =#+PROPERTY= line, do =C-c C-c= or refresh the file before tangling.
+- The language name is the routing key. A block tagged =sh= or =shell= will not match =header-args:bash= and will fail silently.
+- Disabling a section. Set =:tangle no= on the block.
 
-Deploy everything at once:
-
-#+begin_src shell
-  cd ~/dotfiles
-  make check      # dry run
-  make deploy     # symlink all packages into ~
-  make undeploy   # remove those symlinks
-  make redeploy   # unstow then stow, to prune stale links
-  make list       # show which packages were detected
-#+end_src
-
-The package list is derived from the directory listing.
-
-- =Makefile= uses =--dotfiles= by default.
-- Directories in =EXCLUDE= in the =Makefile= are skipped.
-
-** Portages
-
-Use script to diff the config. Do not symlink configs.
-
-** TODO Use section based (json?) config like nix
-
+** TODO portage literate config

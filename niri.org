@@ -1,0 +1,631 @@
+#+TITLE: Niri literate configuration
+#+STARTUP: overview
+
+* About
+
+[[https://niri-wm.github.io/niri/][Niri]] is a scrollable-tiling Wayland compositor: windows sit in columns on an endless horizontal strip, and each monitor has its own vertical stack of workspaces. Its configuration is one [[https://kdl.dev][KDL]] file, =~/.config/niri/config.kdl=.
+
+** How this file works
+
+Niri refuses a config where a section such as =binds= or =layout= appears twice, so the blocks below cannot simply be written out one after the other. Instead:
+
+- No block is tangled on its own. Each top-level heading gives its blocks a name through the =:noweb-ref= property in its drawer.
+- The single block under [[Assembly]] is the only one with a =:tangle= target. It lays out the file and pulls the named pieces in with =<<name>>=.
+
+So =C-c C-v t= still writes the whole file, and a new block under an existing heading is picked up automatically. A new top-level heading needs its own =:noweb-ref= and a line in [[Assembly]].
+
+To disable a single node, put KDL's own =/-= in front of it. After tangling, check the result with =niri validate=; niri reloads the file by itself.
+
+** Related files
+
+- [[file:noctalia.org][noctalia.org]] :: The desktop shell (bar, launcher, notifications). Most of the program keys below talk to it.
+- [[file:alacritty.org][alacritty.org]] :: The terminal opened by =Mod+Return=.
+- [[file:emacs.org][emacs.org]] :: Emacs runs as a daemon started from here, and the capture frame it opens is floated by a window rule here.
+
+* Input
+:PROPERTIES:
+:header-args:kdl: :noweb-ref input :noweb-sep "\n\n"
+:END:
+
+Wiki: [[https://niri-wm.github.io/niri/Configuration:-Input][Configuration: Input]].
+
+** Keyboard
+
+The modifiers are rearranged for Emacs: left Alt acts as Ctrl, left Ctrl as Super, left Super as Alt, and Caps Lock is one more Super. See xkeyboard-config(7) for the option names. Numlock is on at startup.
+
+#+begin_src kdl
+keyboard {
+    xkb {
+        options "ctrl:swap_lalt_lctl_lwin,caps:super"
+    }
+
+    numlock
+}
+#+end_src
+
+** Touchpad
+
+Tap to click, and natural (content follows fingers) scrolling. Mouse and trackpoint stay at their defaults.
+
+#+begin_src kdl
+touchpad {
+    tap
+    natural-scroll
+}
+#+end_src
+
+* Outputs
+:PROPERTIES:
+:header-args:kdl: :noweb-ref outputs :noweb-sep "\n\n"
+:END:
+
+Output names come from =niri msg outputs=. Wiki: [[https://niri-wm.github.io/niri/Configuration:-Outputs][Configuration: Outputs]].
+
+The built-in laptop panel.
+
+#+begin_src kdl
+output "eDP-1" {
+    mode "1920x1080@60.049"
+    scale 1
+    transform "normal"
+    position x=1280 y=0
+}
+#+end_src
+
+The external monitor, at its full refresh rate. Variable refresh rate is only switched on for windows that ask for it through a window rule.
+
+#+begin_src kdl
+output "LG Electronics LG ULTRAGEAR 0x0000B449" {
+    mode "1920x1080@143.981"
+    variable-refresh-rate on-demand=true
+    scale 1
+    position x=0 y=0
+}
+#+end_src
+
+* Layout
+:PROPERTIES:
+:header-args:kdl: :noweb-ref layout :noweb-sep "\n\n"
+:END:
+
+Wiki: [[https://niri-wm.github.io/niri/Configuration:-Layout][Configuration: Layout]].
+
+** Gaps and centering
+
+16 pixels between windows. Focusing a column never recenters the view, except that a lone column is always centered.
+
+#+begin_src kdl
+gaps 16
+
+center-focused-column "never"
+always-center-single-column
+#+end_src
+
+** Column widths
+
+New windows take half the screen. =Mod+R= cycles through thirds and halves.
+
+#+begin_src kdl
+preset-column-widths {
+    proportion 0.33333
+    proportion 0.5
+    proportion 0.66667
+}
+
+default-column-width { proportion 0.5; }
+#+end_src
+
+** Focus ring and border
+
+A thin ring around the focused window only. The border (same thing, but drawn around every window) is off; its settings are kept for when it is switched back on.
+
+The colours here are fallbacks: =noctalia.kdl=, included at the very end, overrides them to match the shell theme.
+
+#+begin_src kdl
+focus-ring {
+    width 2
+    active-color "#7fc8ff"
+    inactive-color "#505050"
+}
+
+border {
+    off
+
+    width 4
+    active-color "#ffc87f"
+    inactive-color "#505050"
+    urgent-color "#9b0000"
+}
+#+end_src
+
+** Shadow
+
+Off (there is no =on=), the values are the defaults kept at hand. They follow the CSS =box-shadow= properties.
+
+#+begin_src kdl
+shadow {
+    softness 30
+    spread 5
+    offset x=0 y=5
+    color "#0007"
+}
+#+end_src
+
+* Startup
+:PROPERTIES:
+:header-args:kdl: :noweb-ref startup :noweb-sep "\n\n"
+:END:
+
+Programs started with the session: the shell, the KDE Connect tray icon, PipeWire, the input method, and the Emacs daemon that every =emacsclient= below connects to.
+
+#+begin_src kdl
+spawn-at-startup "noctalia"
+spawn-at-startup "kdeconnect-indicator"
+spawn-sh-at-startup "gentoo-pipewire-launcher restart"
+spawn-sh-at-startup "fcitx5 -d --replace"
+spawn-sh-at-startup "emacs --fg-daemon"
+#+end_src
+
+* Miscellaneous
+:PROPERTIES:
+:header-args:kdl: :noweb-ref misc :noweb-sep "\n\n"
+:END:
+
+Do not show the hotkey cheat sheet at every login. It is still one =Mod+Shift+/= away.
+
+#+begin_src kdl
+hotkey-overlay {
+    skip-at-startup
+}
+#+end_src
+
+Ask clients to drop their own title bars and shadows. Niri then draws the focus ring /around/ the window instead of behind it. Running apps need a restart to notice a change here.
+
+#+begin_src kdl
+prefer-no-csd
+#+end_src
+
+Where screenshots are saved. The name goes through strftime(3).
+
+#+begin_src kdl
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+#+end_src
+
+#+begin_src kdl
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+}
+#+end_src
+
+Noctalia sends notification actions and window activations without a valid serial. This makes niri honour them anyway.
+
+#+begin_src kdl
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+#+end_src
+
+* Window rules
+:PROPERTIES:
+:header-args:kdl: :noweb-ref window-rules :noweb-sep "\n\n"
+:END:
+
+Find a window's =app-id= and =title= with =niri msg windows=. Wiki: [[https://niri-wm.github.io/niri/Configuration:-Window-Rules][Configuration: Window Rules]].
+
+** Workarounds
+
+WezTerm's initial configure bug: let it pick its own width.
+
+#+begin_src kdl
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+#+end_src
+
+** Floating windows
+
+Small or transient windows that make no sense as a full-height column.
+
+Firefox picture-in-picture player.
+
+#+begin_src kdl
+window-rule {
+    match app-id=r#"firefox-esr"# title="^Picture-in-Picture$"
+    open-floating true
+}
+#+end_src
+
+Firefox notifications have an empty title. They show up in the top-right corner and do not steal focus.
+
+#+begin_src kdl
+window-rule {
+    match app-id="^firefox" title="^$"
+    open-focused false
+    open-floating true
+    default-floating-position x=10 y=10 relative-to="top-right"
+}
+#+end_src
+
+The Noctalia settings window, at a fixed size.
+
+#+begin_src kdl
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+#+end_src
+
+#+begin_src kdl
+window-rule {
+    match app-id="^org.keepassxc.KeePassXC$"
+    open-floating true
+}
+
+window-rule {
+    // match app-id="^org.gnome.NautilusPreviewer$"
+    match app-id="^org.gnome.Nautilus"
+    open-floating true
+}
+
+window-rule {
+    match app-id="^wechat$" title="^Photos and Videos$"
+    open-floating true
+}
+#+end_src
+
+The Emacs frame opened for a capture, by =Mod+Shift+C= below or by the =org-protocol= handler. Both name the frame =emacs-temp-frame=, and Emacs deletes it when the capture is done, see [[file:emacs.org::*Capture from the browser][Capture from the browser]].
+
+#+begin_src kdl
+window-rule {
+    // match app-id="^emacs(?:-[0-9]+)?$" title=r#"^CAPTURE-(?:.+)\.org$"#
+    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-temp-frame$"
+    open-floating true
+}
+#+end_src
+
+** Disabled
+
+Kept as examples, switched off with =/-=.
+
+Hide password managers from screen capture. =block-out-from "screencast"= would keep them visible to third-party screenshot tools.
+
+#+begin_src kdl
+/-window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+
+    block-out-from "screen-capture"
+}
+#+end_src
+
+Rounded corners for all windows.
+
+#+begin_src kdl
+/-window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+#+end_src
+
+* Key bindings
+:PROPERTIES:
+:header-args:kdl: :noweb-ref binds :noweb-sep "\n\n"
+:END:
+
+=Mod= is Super in a real session (and Alt when niri runs nested in a window). Key names are XKB names, =wev= shows the name of any key. Every action here can also be run as =niri msg action ...=.
+
+Keep the modifier swap from [[Keyboard]] in mind: the physical key that sends Super is left Ctrl, or Caps Lock.
+
+** Help
+
+=Mod+?= lists the important hotkeys.
+
+#+begin_src kdl
+Mod+Shift+Slash { show-hotkey-overlay; }
+#+end_src
+
+** Programs
+
+Terminal, then the Noctalia panels: launcher, control center, notifications, session menu.
+
+#+begin_src kdl
+Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+Mod+Space hotkey-overlay-title="Run an Application" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+Mod+S { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+Mod+N { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications";}
+Mod+Shift+E { spawn "noctalia" "msg" "panel-toggle" "session";}
+#+end_src
+
+Lock, Emacs, capture, browser. The capture key opens a dedicated frame, which the window rule above floats.
+
+#+begin_src kdl
+Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
+Mod+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
+Mod+Shift+C hotkey-overlay-title="Org capture" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(org-capture)"; }
+Mod+B hotkey-overlay-title="Browser" { spawn "firefox"; }
+Mod+Shift+B hotkey-overlay-title="Browser incognito" { spawn "firefox" "--private-window"; }
+#+end_src
+
+Toggle the screen reader. =spawn-sh= hands the whole string to =sh -c=, for when pipes or several commands are needed.
+
+#+begin_src kdl
+Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
+#+end_src
+
+** Media keys
+
+Volume, playback and brightness all go through Noctalia, so its on-screen display shows the change. They also work on the lock screen.
+
+#+begin_src kdl
+XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up" "5"; }
+XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down" "5"; }
+XF86AudioMute        allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+XF86AudioMicMute     allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+
+XF86AudioPlay        allow-when-locked=true { spawn "noctalia" "msg" "media" "play"; }
+XF86AudioStop        allow-when-locked=true { spawn "noctalia" "msg" "media" "pause"; }
+XF86AudioPrev        allow-when-locked=true { spawn "noctalia" "msg" "media" "previous"; }
+XF86AudioNext        allow-when-locked=true { spawn "noctalia" "msg" "media" "next"; }
+
+XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
+#+end_src
+
+** Overview and closing
+
+The overview is a zoomed-out view of workspaces and windows, also reachable from the top-left hot corner or a four-finger swipe up.
+
+#+begin_src kdl
+Mod+O repeat=false { toggle-overview; }
+
+Mod+Q repeat=false { close-window; }
+#+end_src
+
+** Focus
+
+Arrows or =HJKL=: left and right move between columns, up and down between the windows of a column.
+
+#+begin_src kdl
+Mod+Left  { focus-column-left; }
+Mod+Down  { focus-window-down; }
+Mod+Up    { focus-window-up; }
+Mod+Right { focus-column-right; }
+Mod+H     { focus-column-left; }
+Mod+J     { focus-window-down; }
+Mod+K     { focus-window-up; }
+Mod+L     { focus-column-right; }
+
+Mod+Home { focus-column-first; }
+Mod+End  { focus-column-last; }
+#+end_src
+
+** Move
+
+The same keys with =Ctrl= carry the window or column along.
+
+#+begin_src kdl
+Mod+Ctrl+Left  { move-column-left; }
+Mod+Ctrl+Down  { move-window-down; }
+Mod+Ctrl+Up    { move-window-up; }
+Mod+Ctrl+Right { move-column-right; }
+Mod+Ctrl+H     { move-column-left; }
+Mod+Ctrl+J     { move-window-down; }
+Mod+Ctrl+K     { move-window-up; }
+Mod+Ctrl+L     { move-column-right; }
+
+Mod+Ctrl+Home { move-column-to-first; }
+Mod+Ctrl+End  { move-column-to-last; }
+#+end_src
+
+** Monitors
+
+=Shift= aims at the neighbouring monitor instead: focus it, or with =Ctrl= send the column there.
+
+#+begin_src kdl
+Mod+Shift+Left  { focus-monitor-left; }
+Mod+Shift+Down  { focus-monitor-down; }
+Mod+Shift+Up    { focus-monitor-up; }
+Mod+Shift+Right { focus-monitor-right; }
+Mod+Shift+H     { focus-monitor-left; }
+Mod+Shift+J     { focus-monitor-down; }
+Mod+Shift+K     { focus-monitor-up; }
+Mod+Shift+L     { focus-monitor-right; }
+
+Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
+Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
+Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
+Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
+Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
+Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
+Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
+#+end_src
+
+** Workspaces
+
+Step through the workspaces, take the column along with =Ctrl=, or reorder the workspace itself with =Shift=.
+
+#+begin_src kdl
+Mod+Page_Down      { focus-workspace-down; }
+Mod+Page_Up        { focus-workspace-up; }
+Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
+
+Mod+Shift+Page_Down { move-workspace-down; }
+Mod+Shift+Page_Up   { move-workspace-up; }
+#+end_src
+
+By index. Workspaces are dynamic, so this is best effort: an index past the last workspace means the empty one at the bottom.
+
+#+begin_src kdl
+Mod+1 { focus-workspace 1; }
+Mod+2 { focus-workspace 2; }
+Mod+3 { focus-workspace 3; }
+Mod+4 { focus-workspace 4; }
+Mod+5 { focus-workspace 5; }
+Mod+6 { focus-workspace 6; }
+Mod+7 { focus-workspace 7; }
+Mod+8 { focus-workspace 8; }
+Mod+9 { focus-workspace 9; }
+Mod+Ctrl+1 { move-column-to-workspace 1; }
+Mod+Ctrl+2 { move-column-to-workspace 2; }
+Mod+Ctrl+3 { move-column-to-workspace 3; }
+Mod+Ctrl+4 { move-column-to-workspace 4; }
+Mod+Ctrl+5 { move-column-to-workspace 5; }
+Mod+Ctrl+6 { move-column-to-workspace 6; }
+Mod+Ctrl+7 { move-column-to-workspace 7; }
+Mod+Ctrl+8 { move-column-to-workspace 8; }
+Mod+Ctrl+9 { move-column-to-workspace 9; }
+#+end_src
+
+** Mouse wheel
+
+With =Mod= held, the wheel scrolls through workspaces. The cooldown keeps a fast wheel from flying through all of them.
+
+#+begin_src kdl
+Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+#+end_src
+
+Sideways it scrolls through columns. =Shift= turns the vertical wheel into a horizontal one, as it does inside applications.
+
+#+begin_src kdl
+Mod+WheelScrollRight      { focus-column-right; }
+Mod+WheelScrollLeft       { focus-column-left; }
+Mod+Ctrl+WheelScrollRight { move-column-right; }
+Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+
+Mod+Shift+WheelScrollDown      { focus-column-right; }
+Mod+Shift+WheelScrollUp        { focus-column-left; }
+Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
+Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
+#+end_src
+
+** Columns
+
+Brackets move the focused window in and out of a column: a lone window is consumed into the neighbouring column, a window already in a column is expelled.
+
+#+begin_src kdl
+Mod+BracketLeft  { consume-or-expel-window-left; }
+Mod+BracketRight { consume-or-expel-window-right; }
+#+end_src
+
+Comma takes the window to the right into the bottom of the focused column, period pushes the bottom window back out.
+
+#+begin_src kdl
+Mod+Comma  { consume-window-into-column; }
+Mod+Period { expel-window-from-column; }
+#+end_src
+
+Show the windows of a column as tabs instead of stacking them.
+
+#+begin_src kdl
+Mod+W { toggle-column-tabbed-display; }
+#+end_src
+
+** Sizes
+
+Cycle through the presets from [[Column widths]], forwards and backwards, and the same for heights.
+
+#+begin_src kdl
+Mod+R { switch-preset-column-width; }
+Mod+Shift+R { switch-preset-column-width-back; }
+
+Mod+Ctrl+Shift+R { switch-preset-window-height; }
+Mod+Ctrl+R { reset-window-height; }
+#+end_src
+
+Three ways to make a window big: =F= keeps the gaps, =M= goes to the screen edges like a normal maximize, =Shift+F= is real fullscreen. =Ctrl+F= fills whatever space the other visible columns leave.
+
+#+begin_src kdl
+Mod+F { maximize-column; }
+Mod+Shift+F { fullscreen-window; }
+Mod+M { maximize-window-to-edges; }
+Mod+Ctrl+F { expand-column-to-available-width; }
+#+end_src
+
+Center the focused column, or all visible ones.
+
+#+begin_src kdl
+Mod+C { center-column; }
+Mod+Ctrl+C { center-visible-columns; }
+#+end_src
+
+Finer steps. The argument can also be absolute (="1000"=, ="25%"=) or in pixels (="+5"=).
+
+#+begin_src kdl
+Mod+Minus { set-column-width "-10%"; }
+Mod+Equal { set-column-width "+10%"; }
+
+Mod+Shift+Minus { set-window-height "-10%"; }
+Mod+Shift+Equal { set-window-height "+10%"; }
+#+end_src
+
+** Floating
+
+#+begin_src kdl
+Mod+V       { toggle-window-floating; }
+Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+#+end_src
+
+** Screenshots
+
+Interactive selection, the whole screen, or the focused window.
+
+#+begin_src kdl
+Print { screenshot; }
+Ctrl+Print { screenshot-screen; }
+Alt+Print { screenshot-window; }
+#+end_src
+
+** Session
+
+Remote-desktop clients and software KVM switches may ask niri to stop handling its own shortcuts. This is the escape hatch, and it cannot be inhibited itself.
+
+#+begin_src kdl
+Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+#+end_src
+
+Power off the monitors, any input wakes them up again. Quitting niri goes through the Noctalia session menu (=Mod+Shift+E=), so the built-in =quit= action is not bound.
+
+#+begin_src kdl
+Mod+Shift+P { power-off-monitors; }
+#+end_src
+
+* Assembly
+
+The only tangled block. It decides the order of the sections in =config.kdl= and wraps the pieces that niri wants inside a single node.
+
+The last line pulls in =~/.config/niri/noctalia.kdl=, which Noctalia regenerates whenever its theme changes (see [[file:noctalia.org::*Theme][Theme]]). It comes last so that its colours win over the ones in [[Focus ring and border]]. That file is not managed here.
+
+#+begin_src kdl :tangle ~/.config/niri/config.kdl :mkdirp yes :noweb yes
+// config.kdl --- generated from niri.org, do not edit
+
+input {
+    <<input>>
+}
+
+<<outputs>>
+
+layout {
+    <<layout>>
+}
+
+<<startup>>
+
+<<misc>>
+
+<<window-rules>>
+
+binds {
+    <<binds>>
+}
+
+include "noctalia.kdl"
+#+end_src

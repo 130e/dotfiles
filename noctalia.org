@@ -1,0 +1,107 @@
+#+TITLE: Noctalia literate configuration
+#+STARTUP: overview
+#+PROPERTY: header-args:toml :tangle ~/.config/noctalia/config.toml :mkdirp yes
+
+* About
+
+Noctalia is the desktop shell on top of niri: bar, launcher, control center, notifications, on-screen displays. It is started and driven from [[file:niri.org][niri.org]].
+
+It has two layers of settings:
+
+- =~/.local/state/noctalia/settings.toml= :: Written by the settings app. This is where most tweaking should happen.
+- =~/.config/noctalia/config.toml= :: This file, hand-written overrides. Hard-wiring things here is not recommended, so it only holds what should survive a reset of the settings app.
+
+=noctalia config export= prints the current settings in this format, which is where the blocks below started from. Every =toml= block is written, top to bottom, into =config.toml= by =C-c C-v t=; a block can opt out with =:tangle no=. Keep each TOML table inside one block.
+
+#+begin_src toml
+# config.toml --- generated from noctalia.org, do not edit
+# config_version = 1
+#+end_src
+
+* Shell
+
+The proportional sibling of the Iosevka used in the terminal and in Emacs.
+
+#+begin_src toml
+[shell]
+font_family = "Iosevka Aile"
+#+end_src
+
+#+begin_src toml
+[audio]
+enable_sounds = true
+#+end_src
+
+* Theme
+
+Dracula, following the system light/dark mode.
+
+The templates are what keeps the rest of the desktop in the same colours: Noctalia regenerates the GTK 3 and 4 stylesheets and =~/.config/niri/noctalia.kdl=, which niri includes at the end of its config (see [[file:niri.org::*Assembly][Assembly]]).
+
+#+begin_src toml
+[theme]
+builtin = "Dracula"
+mode = "auto"
+
+    [theme.templates]
+    builtin_ids = [ "gtk3", "gtk4", "niri"]
+#+end_src
+
+* Bar
+
+Only the left end is set here: launcher button, then workspaces.
+
+#+begin_src toml
+[bar.default]
+start = [ "launcher", "workspaces" ]
+#+end_src
+
+** Widgets
+
+Icons only for brightness, network and volume. The media widget disappears when nothing is playing.
+
+#+begin_src toml
+[widget.brightness]
+show_label = false
+
+[widget.network]
+show_label = false
+
+[widget.volume]
+mute_color = "secondary"
+show_label = false
+
+[widget.media]
+hide_when_no_media = true
+#+end_src
+
+Date and 12-hour time. The format string is strftime-like.
+
+#+begin_src toml
+[widget.clock]
+format = "📅 {:%a %b %d} 🕰 {:%I:%M %p}"
+#+end_src
+
+* Notifications and OSD
+
+Keep a day of notification history. No on-screen display when the keyboard layout changes.
+
+#+begin_src toml
+[notification]
+history_retention_hours = 24
+
+[osd.kinds]
+keyboard_layout = false
+#+end_src
+
+* Location and weather
+
+Locate automatically, temperatures in Fahrenheit.
+
+#+begin_src toml
+[location]
+auto_locate = true
+
+[weather]
+unit = "imperial"
+#+end_src

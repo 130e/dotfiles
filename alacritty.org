@@ -1,0 +1,86 @@
+#+TITLE: Alacritty literate configuration
+#+STARTUP: overview
+#+PROPERTY: header-args:toml :tangle ~/.config/alacritty/alacritty.toml :mkdirp yes
+
+* About
+
+[[https://alacritty.org][Alacritty]] is the terminal opened by =Mod+Return= in [[file:niri.org][niri.org]]. Every =toml= block below is written, top to bottom, into =~/.config/alacritty/alacritty.toml= by =C-c C-v t=. Alacritty reloads the file by itself.
+
+A block can opt out with =:tangle no=. Keep each TOML table inside one block: a table header that appears twice is an error.
+
+#+begin_src toml
+# alacritty.toml --- generated from alacritty.org, do not edit
+#+end_src
+
+* Imports
+
+Other TOML files to merge in, typically a colour theme dropped into =~/.config/alacritty/themes/=. Empty for now.
+
+#+begin_src toml
+[general]
+import = [
+]
+#+end_src
+
+* Window
+
+No title bar (niri draws the focus ring), and some padding so the text does not touch the edge.
+
+#+begin_src toml
+[window]
+decorations = "None"
+padding = { x = 12, y = 12 }
+#+end_src
+
+* Font
+
+The same family and size as the default face in [[file:emacs.org::*Fonts][emacs.org]].
+
+#+begin_src toml
+[font]
+size = 13.0
+normal = { family = "Iosevka" }
+#+end_src
+
+* Cursor and mouse
+
+A blinking block, hollow when the window is not focused. The mouse pointer gets out of the way while typing.
+
+#+begin_src toml
+[cursor]
+style = { shape = "Block", blinking = "On" }
+blink_interval = 500
+unfocused_hollow = true
+
+[mouse]
+hide_when_typing = true
+#+end_src
+
+* Bell
+
+No visual bell.
+
+#+begin_src toml
+[bell]
+duration = 0
+#+end_src
+
+* Key bindings
+
+Reference: [[https://github.com/alacritty/alacritty/wiki/Keyboard-mappings][Keyboard mappings]].
+
+- =Shift+Enter= sends a plain newline, for programs that tell it apart from =Enter= to continue on a new line instead of submitting.
+- =Alt+w= and =Alt+y= copy and paste, in the spirit of Emacs' =M-w= and =C-y=.
+- The font size keys follow the usual zoom keys.
+
+#+begin_src toml
+[keyboard]
+bindings = [
+  { key = "Enter",   mods = "Shift",         chars = "\n" },
+  { key = "w",       mods = "Alt", action = "Copy"  },
+  { key = "y",       mods = "Alt", action = "Paste"  },
+  { key = "+",       mods = "Control|Shift", action = "IncreaseFontSize" },
+  { key = "-",       mods = "Control",       action = "DecreaseFontSize" },
+  { key = "=",       mods = "Control",       action = "ResetFontSize"    },
+]
+#+end_src

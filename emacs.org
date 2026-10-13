@@ -1,0 +1,923 @@
+#+TITLE: Emacs literate configuration
+#+STARTUP: overview
+#+PROPERTY: header-args:emacs-lisp :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags)) "no" "~/.emacs.d/init.el")) :mkdirp yes
+
+* About
+
+** How this file works
+
+Every =emacs-lisp= block below is written, top to bottom, into a single =init.el= by =C-c C-v t= (org-babel-tangle). The order of the headings is therefore the load order.
+
+The tangle target is computed by the =#+PROPERTY= line at the top: a block goes to =init.el= unless its heading, or any parent heading, carries the =:INACTIVE:= tag. A single block can still opt out with =:tangle no=.
+
+** Conventions
+
+There is no =use-package=. The outline does the organising, so one heading holds everything about one topic, and the code under it is plain Emacs Lisp:
+
+| use-package keyword | Written here as                                       |
+|---------------------+-------------------------------------------------------|
+| :ensure             | Nothing. Packages come from the system, see [[Packages]]  |
+| :demand             | (require 'feature)                                    |
+| :commands           | (autoload 'command "library" nil t)                   |
+| :bind               | (keymap-global-set "KEY" #'command)                   |
+| :hook               | (add-hook 'some-mode-hook #'function)                 |
+| :mode, :magic       | (add-to-list 'auto-mode-alist ...) and friends        |
+| :custom, :init      | (setq ...) at top level                               |
+| :config, :after     | (with-eval-after-load 'feature ...), only when needed |
+
+Two things =use-package= did silently now have to be spelled out:
+
+- Autoloads :: =:bind=, =:hook= and =:mode= generated an autoload for the command they named. Most packages ship their own, but a few commands are missing from the system autoloads and get an explicit =autoload= line.
+- Deferral :: A =setq= on a variable of a package that is not loaded yet is fine, the package keeps the value. Only code that calls into the package, or touches its faces, hooks and keymaps, needs =with-eval-after-load=.
+
+** Tags
+
+- =:BINDING:=  The section defines some key binding
+- =:HOOK:=     The section installs some hook
+- =:ADVICE:=   The section installs some advice
+- =:FACE:=     The section modifies some face
+- =:MODE:=     The section activates a global mode
+- =:DEFER:=    Part of the section only runs once a package is loaded
+- =:PERSONAL:= The content is personal (paths, fonts) and should be adapted
+- =:OTHER:=    The section is tangled to a different file than =init.el=
+- =:INACTIVE:= The section is not tangled
+
+** Packages
+
+Nothing is installed from here. These packages are expected on the =load-path=, installed by the system package manager (which also loads their autoloads through =site-gentoo=).
+
+| Package       | Used in         | Purpose                                |
+|---------------+-----------------+----------------------------------------|
+| kaolin-themes | [[Theme]]           | Colour theme                           |
+| vertico       | [[Minibuffer]]      | Vertical minibuffer completion         |
+| marginalia    | [[Minibuffer]]      | Annotations for completion candidates  |
+| orderless     | [[Matching style]]  | Match space-separated terms, any order |
+| which-key     | [[Key hints]]       | Show available keys after a prefix     |
+| company       | [[In-buffer]]       | Completion popup while typing          |
+| org-modern    | [[Looks]]           | Prettier Org buffers and agenda        |
+| org-roam      | [[Roam]]            | Linked notes with backlinks            |
+| calfw         | [[Calendar]]        | Month calendar fed by the agenda       |
+| markdown-mode | [[Markdown]]        | Markdown and GitHub-flavoured Markdown |
+| auctex        | [[AUCTeX]]          | LaTeX editing                          |
+| pdf-tools     | [[PDF viewing]]     | PDF viewer with SyncTeX                |
+| magit         | [[Version control]] | Git interface                          |
+| diff-hl       | [[Version control]] | Uncommitted changes in the fringe      |
+
+External programs: =pandoc= (Markdown preview and the conversion helpers), =dvisvgm= (Org LaTeX preview), =dot= (Babel), =firefox=, plus the language servers used by [[Language servers]].
+
+* Base
+
+** Header
+
+Lexical bindings.
+
+#+begin_src emacs-lisp
+;;; init.el --- generated from emacs.org, do not edit -*- lexical-binding: t -*-
+#+end_src
+
+** Custom-file
+
+When you customize a variable inside emacs, the preference can be stored in [[info:emacs#Saving Customizations][a separate file]] (else emacs modifies your config file directly).
+
+#+begin_src emacs-lisp
+(setq custom-file (locate-user-emacs-file "custom.el"))
+(load custom-file :no-error-if-file-is-missing)
+#+end_src
+
+Trust every theme without asking, since none of them comes from an unknown source.
+
+#+begin_src emacs-lisp
+(setq custom-safe-themes t)
+#+end_src
+
+** Startup :PERSONAL:
+
+No splash screen, start in the inbox instead.
+
+#+begin_src emacs-lisp
+(setq inhibit-startup-message t
+      initial-buffer-choice   "~/RoamNotes/inbox.org")
+#+end_src
+
+** Prompts and feedback
+
+Answer with a single key, and stay quiet.
+
+#+begin_src emacs-lisp
+(setq use-short-answers t
+      read-answer-short t
+      ring-bell-function 'ignore
+      visible-bell       nil)
+#+end_src
+
+** Files :HOOK:
+
+Backups go into one directory instead of next to each file.
+
+#+begin_src emacs-lisp
+(setq backup-directory-alist `(("." . ,(locate-user-emacs-file "backup-files/"))))
+#+end_src
+
+Symlinks into a version-controlled directory are followed without asking, which matters because most dotfiles are symlinks. Read-only files open in view mode.
+
+#+begin_src emacs-lisp
+(setq vc-follow-symlinks     t
+      view-read-only         t)
+#+end_src
+
+Reload buffers whose file changed on disk.
+
+#+begin_src emacs-lisp
+(setq auto-revert-verbose nil)
+(global-auto-revert-mode 1)
+#+end_src
+
+** Session persistence :MODE:
+
+Remember recent files, the cursor position in each file, and minibuffer history. Bookmarks are saved as soon as they change.
+
+#+begin_src emacs-lisp
+(setq history-length     25
+      bookmark-save-flag 1)
+(recentf-mode    1)
+(save-place-mode 1)
+(savehist-mode   1)
+#+end_src
+
+** Editing :MODE:HOOK:
+
+Basic editing stuffs. Spaces instead of tabs, matching parentheses, typing replaces the selection.
+
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil)
+(setq save-interprogram-paste-before-kill t)
+
+;; (cua-mode           1)
+(show-paren-mode       1)
+(electric-pair-mode    1)
+(delete-selection-mode 1)
+(repeat-mode           1)
+#+end_src
+
+Prose wraps at the window edge and is spell-checked.
+
+#+begin_src emacs-lisp
+(add-hook 'text-mode-hook #'visual-line-mode)
+(add-hook 'text-mode-hook #'flyspell-mode)
+#+end_src
+
+Only show trailing whitespace in certain modes.
+
+#+begin_src emacs-lisp
+(defun my/set-trailing-whitespace ()
+  "Show trailing whitespace in the current buffer."
+  (setq-local show-trailing-whitespace t))
+
+(add-hook 'prog-mode-hook #'my/set-trailing-whitespace)
+(add-hook 'org-mode-hook  #'my/set-trailing-whitespace)
+#+end_src
+
+** Keys :BINDING:
+
+#+begin_src emacs-lisp
+(keymap-global-set "C-z"   #'undo)
+(keymap-global-set "C-S-z" #'undo-redo)
+(keymap-global-set "C-x f" #'find-file)
+(keymap-global-set "C-c 5" #'other-frame-prefix)
+#+end_src
+
+** Windows and frames
+
+Resize by pixel and do not allow automatic resizing due to font or chrome changes.
+
+#+begin_src emacs-lisp
+(setq window-combination-resize    t
+      frame-resize-pixelwise       t
+      window-resize-pixelwise      t
+      frame-inhibit-implied-resize t)
+#+end_src
+
+** Scrolling and mouse :MODE:
+
+#+begin_src emacs-lisp
+(pixel-scroll-mode      1)
+(global-xref-mouse-mode 1)
+#+end_src
+
+** Help and search
+
+Help windows take focus (so =q= closes them straight away) and are reused.
+
+#+begin_src emacs-lisp
+(setq help-window-select                       t
+      help-window-keep-selected                t
+      find-library-include-other-files         nil
+      list-matching-lines-jump-to-current-line nil
+      imenu-auto-rescan                        t
+      shell-command-prompt-show-cwd            t
+      browse-url-browser-function              'browse-url-firefox)
+#+end_src
+
+** Dired
+
+One Dired buffer at a time, recursive operations without asking, deletions go to the trash.
+
+#+begin_src emacs-lisp
+(setq dired-kill-when-opening-new-dired-buffer         t
+      dired-auto-revert-buffer                         t
+      dired-clean-up-buffers-too                       t
+      dired-clean-confirm-killing-deleted-buffers      t
+      dired-recursive-copies                           'always
+      dired-recursive-deletes                          'always
+      delete-by-moving-to-trash                        t
+      dired-create-destination-dirs                    'ask
+      dired-create-destination-dirs-on-trailing-dirsep t
+      wdired-create-parent-directories                 t
+      dired-mouse-drag-files                           t)
+#+end_src
+
+** Diff
+
+#+begin_src emacs-lisp
+(setq diff-font-lock-syntax nil)
+#+end_src
+
+* Appearance
+
+The configuration must be in order:
+
+- fonts.
+- theme.
+- face fine-tuning per mode.
+
+** Fonts :FACE:PERSONAL:
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default        nil :family "Iosevka"        :height 130)
+(set-face-attribute 'variable-pitch nil :family "Iosevka Etoile" :height 1.0)
+(set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
+#+end_src
+
+** Chrome :MODE:
+
+No menu bar, tool bar or scroll bar, and a little breathing room on both sides.
+
+#+begin_src emacs-lisp
+(menu-bar-mode   0)
+(tool-bar-mode   0)
+(scroll-bar-mode 0)
+(set-fringe-mode 10)
+#+end_src
+
+** Theme
+
+=kaolin-themes= has to be loaded first, that is what puts its themes on =custom-theme-load-path=.
+
+#+begin_src emacs-lisp
+(require 'kaolin-themes)
+(load-theme 'kaolin-mono-light t)
+#+end_src
+
+The desktop shell can also generate a theme matching the wallpaper.
+
+#+begin_src emacs-lisp :tangle no
+(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
+  (add-to-list 'custom-theme-load-path desktop-theme-dir)
+  (load-theme 'noctalia t))
+#+end_src
+
+** Thin type :FACE:
+
+Better prose reading experience, inspired by Nano-emacs. Thin type, and "bold" becomes only one step heavier.
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :weight 'light)
+(set-face-attribute 'bold    nil :weight 'regular)
+#+end_src
+
+** Borders and status line :FACE:HOOK:
+
+Borders, dividers and fringes melt into the background. The mode line is collapsed to a thin rule and the status moves up into the header line. The colours are read from the current theme, so the function runs again whenever a theme is enabled.
+
+#+begin_src emacs-lisp
+(defun my/apply-chrome (&rest _)
+  (let ((bg     (face-background 'default))
+        (subtle (face-background 'mode-line-inactive nil t))
+        (rule   (face-foreground 'shadow nil t)))
+    (dolist (f '(internal-border window-divider fringe
+                 window-divider-first-pixel window-divider-last-pixel))
+      (set-face-attribute f nil :background bg :foreground bg))
+    ;; Mode line collapsed to a thin rule
+    (dolist (f '(mode-line mode-line-inactive))
+      (set-face-attribute f nil :height 0.1 :box nil :overline nil
+                          :foreground bg :background bg :underline rule))
+    ;; Status bar lives in the header line instead
+    (set-face-attribute 'header-line nil :background subtle :box nil
+                        :underline nil :inherit nil)))
+
+(my/apply-chrome)
+(add-hook 'enable-theme-functions #'my/apply-chrome)
+#+end_src
+
+The header line shows the buffer name, the major mode, and the position at the right edge.
+
+#+begin_src emacs-lisp
+(setq x-underline-at-descent-line t)
+(setq-default mode-line-format ""
+              header-line-format
+              '(" " (:propertize "%b" face bold) "  (" mode-name ")"
+                (:eval (propertize " " 'display '(space :align-to (- right 8))))
+                "%l:%c"))
+#+end_src
+
+** Headings :FACE:DEFER:
+
+Headings keep the default colour and are only one step heavier. In Org they also grow with their level.
+
+#+begin_src emacs-lisp
+(defface my-strong '((t :weight medium))
+  "Structural text: default colour, one step heavier.")
+
+(with-eval-after-load 'outline
+  (dolist (n (number-sequence 1 8))
+    (set-face-attribute (intern (format "outline-%d" n)) nil
+                        :inherit 'my-strong :foreground 'unspecified)))
+
+(with-eval-after-load 'markdown-mode
+  (set-face-attribute 'markdown-header-face nil
+                      :inherit 'my-strong :foreground 'unspecified :weight 'unspecified))
+
+(with-eval-after-load 'org
+  (cl-loop for (face . height) in '((org-level-1 . 1.4) (org-level-2 . 1.25)
+                                    (org-level-3 . 1.15) (org-level-4 . 1.1))
+           do (set-face-attribute face nil :height height)))
+#+end_src
+
+** Mixed pitch :FACE:HOOK:DEFER:
+
+Prose buffers use the proportional font. Everything that has to line up (tables, code, drawers, dates) is pinned back to the fixed-pitch one.
+
+#+begin_src emacs-lisp
+(defun my/fixed-pitch-faces (&rest faces)
+  "Make FACES inherit `fixed-pitch', keeping their existing inheritance."
+  (dolist (face faces)
+    (let ((old (face-attribute face :inherit nil)))
+      (set-face-attribute
+       face nil :inherit
+       (cons 'fixed-pitch
+             (remq 'fixed-pitch
+                   (if (eq old 'unspecified) nil (ensure-list old))))))))
+
+(add-hook 'org-mode-hook      #'variable-pitch-mode)
+(add-hook 'markdown-mode-hook #'variable-pitch-mode)
+
+(with-eval-after-load 'org
+  (my/fixed-pitch-faces
+   'org-table 'org-formula 'org-code 'org-verbatim 'org-block
+   'org-meta-line 'org-special-keyword 'org-property-value 'org-drawer
+   'org-document-info-keyword 'org-checkbox 'org-date))
+
+(with-eval-after-load 'org-indent
+  (my/fixed-pitch-faces 'org-indent))
+
+(with-eval-after-load 'org-modern
+  (my/fixed-pitch-faces 'org-modern-label 'org-modern-symbol))
+#+end_src
+
+* Completion
+
+** Minibuffer :MODE:
+
+Vertico shows the candidates as a vertical list, Marginalia annotates them.
+
+#+begin_src emacs-lisp
+(setq vertico-resize t
+      vertico-cycle  t)
+(vertico-mode    1)
+(marginalia-mode 1)
+#+end_src
+
+** Matching style
+
+Orderless matches space-separated terms in any order. File names keep partial completion, so =/u/s/e= still expands to =/usr/share/emacs=.
+
+#+begin_src emacs-lisp
+(setq completion-styles               '(orderless basic)
+      completion-category-defaults    nil
+      completion-category-overrides   '((file (styles partial-completion)))
+      completion-pcm-leading-wildcard t)
+#+end_src
+
+The built-in alternative, kept for reference.
+
+#+begin_src emacs-lisp :tangle no
+(setq completion-styles '(basic partial-completion emacs22 flex)
+      minibuffer-visible-completions t
+      completions-detailed t
+      completions-group t
+      completion-auto-select 'second-tab
+      completion-eager-update t
+      global-completion-preview-mode t)
+#+end_src
+
+** Key hints :MODE:
+
+#+begin_src emacs-lisp
+(which-key-mode 1)
+#+end_src
+
+** In-buffer :MODE:
+
+Company pops up completions while typing, and also looks for words in the other buffers.
+
+#+begin_src emacs-lisp
+(setq company-dabbrev-other-buffers t)
+(global-company-mode 1)
+#+end_src
+
+* Org
+
+Org is loaded eagerly rather than on first use: =org-protocol= has to be listening before the first capture arrives from the browser. Everything below can therefore assume Org is loaded.
+
+#+begin_src emacs-lisp
+(require 'org)
+#+end_src
+
+** Keys :BINDING:
+
+#+begin_src emacs-lisp
+(keymap-global-set "C-c a" #'org-agenda)
+(keymap-global-set "C-c c" #'org-capture)
+(keymap-global-set "C-c l" #'org-store-link)
+#+end_src
+
+** Editing
+
+#+begin_src emacs-lisp
+(setq org-catch-invisible-edits 'show-and-error
+      org-special-ctrl-a/e t
+      org-insert-heading-respect-content t
+      org-return-follows-link t)          ; RET opens the link
+#+end_src
+
+** Looks :HOOK:
+
+Hide the markup and show the result: emphasis markers, drawers, entities, inline images.
+
+#+begin_src emacs-lisp
+(setq org-hide-emphasis-markers t
+      org-hide-drawer-startup t
+      org-pretty-entities t
+      ;; org-ellipsis "…"
+      org-cycle-separator-lines 1         ; A fold keeps one empty line visible
+      org-startup-with-inline-images t
+      org-image-actual-width '(600))
+#+end_src
+
+=org-modern= restyles headings, keywords, tables and the agenda.
+
+#+begin_src emacs-lisp
+(setq org-modern-star 'replace)
+(add-hook 'org-mode-hook            #'org-modern-mode)
+(add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
+#+end_src
+
+** Todo and logging
+
+State changes are logged into the =LOGBOOK= drawer. =WAIT= and =CANCELLED= ask for a note.
+
+#+begin_src emacs-lisp
+(setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|"
+                                    "DONE(d!)" "CANCELLED(c@)"))
+      org-log-done 'time
+      org-log-into-drawer t
+      org-log-repeat 'time)
+#+end_src
+
+** Capture :HOOK:PERSONAL:
+
+Everything lands in the inbox and is refiled during review.
+
+#+begin_src emacs-lisp
+(setq org-capture-templates
+      '(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
+         "* TODO %?\n%U" :empty-lines 1)
+        ("s" "Scheduled todo" entry (file "~/RoamNotes/inbox.org")
+         "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
+        ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
+         "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
+        ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
+         "* TODO %?\n%U\n%a" :empty-lines 1)
+        ("w" "Quote selected text and link" entry (file "~/RoamNotes/inbox.org")
+         "* %:description\n%U\n%:link\n\n#+begin_quote\n%i\n#+end_quote\n%?" :empty-lines 1)
+        ;; Meetings land in the inbox too; refile to a project during review.
+        ("m" "Meeting" entry (file "~/RoamNotes/inbox.org")
+         "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
+         :empty-lines 1 :clock-in t :clock-resume t)))
+
+(add-hook 'org-capture-mode-hook #'delete-other-windows)
+#+end_src
+
+** Capture from the browser :HOOK:
+
+=org-protocol= lets the browser hand a page (and the selected text) to =org-capture= through an =org-protocol://= URL.
+
+#+begin_src emacs-lisp
+(require 'org-protocol)
+#+end_src
+
+The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame has no purpose left, so it is deleted.
+
+#+begin_src emacs-lisp
+(defun my/del-temp-frame ()
+  "Delete frame if its frame title matches."
+  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
+    (delete-frame)))
+
+(add-hook 'org-capture-after-finalize-hook #'my/del-temp-frame)
+#+end_src
+
+*** Desktop entry :OTHER:
+
+This is the other half: the desktop entry that registers =emacsclient= as the handler for =org-protocol://= and names the frame.
+
+#+begin_src conf-desktop :tangle ~/.local/share/applications/emacsclient-org-protocol.desktop :mkdirp yes
+[Desktop Entry]
+Type=Application
+Name=Emacsclient (org-protocol)
+Comment=Custom org-protocol handler (gentoo bug 950674, upstream bug 74467)
+NoDisplay=true
+Categories=Other;
+Keywords=org-protocol;
+Exec=/usr/bin/emacsclient -c -F "((name . \\"emacs-temp-frame\\"))" %u
+Terminal=false
+StartupWMClass=Emacs
+MimeType=x-scheme-handler/org-protocol;
+#+end_src
+
+** Refile and archive :PERSONAL:
+
+Refile completes on outline paths in one step, not on timestamped file names.
+
+#+begin_src emacs-lisp
+(setq org-refile-targets '((org-agenda-files :maxlevel . 3))
+      org-refile-use-outline-path 'file
+      org-outline-path-complete-in-steps nil
+      org-refile-allow-creating-parent-nodes 'confirm)
+#+end_src
+
+Archived entries go to a datetree, filed by their =CLOSED= date. This can be overridden per file with =#+ARCHIVE: ::* Archive=.
+
+#+begin_src emacs-lisp
+(setq org-archive-location "~/RoamNotes/archive.org::datetree/")
+#+end_src
+
+** Clocking and timer
+
+Clocking is what makes "when/where did I do this" answerable later. =C-c C-x C-i= clocks in, =C-c C-x C-o= out, =C-c C-x C-j= jumps to the running clock.
+
+#+begin_src emacs-lisp
+(setq org-clock-persist 'history
+      org-clock-in-resume t
+      org-clock-into-drawer t
+      org-clock-out-remove-zero-time-clocks t
+      org-clock-report-include-clocking-task t)
+(org-clock-persistence-insinuate)
+#+end_src
+
+The countdown timer defaults to 25 minutes.
+
+#+begin_src emacs-lisp
+(add-to-list 'org-modules 'org-timer)
+(setq org-timer-default-timer 25)
+#+end_src
+
+** Babel :HOOK:
+
+Evaluate graphviz, elisp and shell blocks. Only shell still asks for confirmation. Images produced by a block are refreshed right after it ran.
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((dot        . t)
+   (emacs-lisp . t)
+   (shell      . t)))
+
+(defun my/org-confirm-babel-evaluate (lang _body)
+  (not (member lang '("dot" "emacs-lisp"))))
+
+(setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate)
+(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
+#+end_src
+
+** LaTeX preview :ADVICE:
+
+Render fragments as SVG, slightly enlarged, as soon as a file opens (per file: =#+STARTUP: latexpreview=).
+
+#+begin_src emacs-lisp
+(setq org-preview-latex-default-process 'dvisvgm
+      org-startup-with-latex-preview t)
+(plist-put org-format-latex-options :scale 1.3)
+;; (setq org-highlight-latex-and-related '(native latex script entities))
+#+end_src
+
+Fix for TRAMP: in a remote buffer the preview would run LaTeX on the remote host. Force it to render locally.
+
+#+begin_src emacs-lisp
+(defun my/org-preview-latex-locally (orig &rest args)
+  (if (file-remote-p default-directory)
+      (let ((default-directory temporary-file-directory))
+        (apply orig args))
+    (apply orig args)))
+
+(advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
+#+end_src
+
+** Roam :BINDING:MODE:PERSONAL:
+
+Loaded eagerly as well, for the same reason as Org: =org-roam-protocol= has to be listening.
+
+#+begin_src emacs-lisp
+(setq org-roam-directory (file-truename "~/RoamNotes")
+      org-roam-mode-sections '(org-roam-backlinks-section
+                               org-roam-reflinks-section))
+
+(require 'org-roam)
+(require 'org-roam-protocol)
+(org-roam-db-autosync-mode 1)
+#+end_src
+
+A page captured from the browser becomes a reference note, with the selection quoted.
+
+#+begin_src emacs-lisp
+(setq org-roam-capture-ref-templates
+      '(("w" "ref" plain "#+begin_quote\n${body}\n#+end_quote\n%?"
+         :target (file+head "${slug}.org" "#+title: ${title}")
+         :unnarrowed t)))
+#+end_src
+
+Everything lives under =C-c n=.
+
+#+begin_src emacs-lisp
+(keymap-global-set "C-c n f" #'org-roam-node-find)
+(keymap-global-set "C-c n c" #'org-roam-capture)
+(keymap-global-set "C-c n l" #'org-roam-buffer-toggle)
+(keymap-global-set "C-c n g" #'org-roam-graph)
+(keymap-global-set "C-c n n" #'org-id-get-create)
+(keymap-global-set "C-c n i" #'org-roam-node-insert)
+(keymap-global-set "C-c n r" #'org-roam-refile)
+(keymap-global-set "C-c n e" #'org-roam-extract-subtree)
+(keymap-global-set "C-c n j" #'org-roam-dailies-capture-today)
+(keymap-global-set "C-c n J" #'org-roam-dailies-goto-today)
+#+end_src
+
+The backlinks buffer opens as a side window on the right and survives =C-x 1=.
+
+#+begin_src emacs-lisp
+(add-to-list 'display-buffer-alist
+             '("\\*org-roam\\*"
+               (display-buffer-in-side-window)
+               (side . right)
+               (window-width . 0.33)
+               (window-parameters . ((no-delete-other-windows . t)))))
+#+end_src
+
+** Helpers
+
+Unwrap hard-wrapped Org text by round-tripping the region through pandoc.
+
+#+begin_src emacs-lisp
+(defun my/org-unroll-region (start end)
+  (interactive "r")
+  (shell-command-on-region
+   start end
+   "pandoc -f org -t org --wrap=none" t t))
+#+end_src
+
+* Agenda
+
+** Files :PERSONAL:
+
+#+begin_src emacs-lisp
+(setq org-agenda-files '("~/RoamNotes/inbox.org"
+                         "~/RoamNotes/life.org"
+                         "~/RoamNotes/routine.org"
+                         "~/RoamNotes/projects/"))
+#+end_src
+
+** View
+
+One day at a time, weeks start on Sunday, compact blocks.
+
+#+begin_src emacs-lisp
+(setq org-agenda-span 'day
+      org-agenda-start-on-weekday 0
+      calendar-week-start-day 0
+      org-agenda-show-all-dates nil
+      org-agenda-compact-blocks t
+      org-agenda-time-grid '((daily today require-timed remove-match)
+                             (600 700 900 1200 1400 1800 2100)
+                             " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+      org-agenda-current-time-string "⭠ now ─────────"
+      org-agenda-sorting-strategy
+      '((agenda time-up urgency-down category-keep)
+        (todo urgency-down category-keep)
+        (tags urgency-down category-keep)
+        (search category-keep)))
+#+end_src
+
+** Habits
+
+#+begin_src emacs-lisp
+(require 'org-habit)
+#+end_src
+
+** Calendar :BINDING:
+
+A month view of the agenda. The command is not in the system autoloads, hence the explicit =autoload=.
+
+#+begin_src emacs-lisp
+(autoload 'calfw-org-open-calendar "calfw-org" nil t)
+(setq calfw-org-overwrite-default-keybinding t)
+(keymap-global-set "C-c m" #'calfw-org-open-calendar)
+#+end_src
+
+* Markdown
+
+=.md= files open in GitHub-flavoured Markdown mode, with the markup hidden and code blocks fontified in their own language. =gfm-mode= is not in the system autoloads either.
+
+#+begin_src emacs-lisp
+(autoload 'gfm-mode "markdown-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.md\\'" . gfm-mode))
+
+(setq markdown-command "pandoc"
+      markdown-hide-markup t
+      markdown-fontify-code-blocks-natively t
+      markdown-header-scaling t)
+#+end_src
+
+Convert a Markdown region (typically something pasted) to Org in place.
+
+#+begin_src emacs-lisp
+(defun my/markdown-to-org-region (start end)
+  (interactive "r")
+  (shell-command-on-region
+   start end
+   "pandoc -f markdown -t org --wrap=none" t t))
+#+end_src
+
+* LaTeX
+
+** AUCTeX :HOOK:DEFER:
+
+Parse documents on load and save, cross-references through RefTeX, PDF shown with PDF Tools, and SyncTeX in both directions.
+
+#+begin_src emacs-lisp
+(setq TeX-auto-save t
+      TeX-parse-self t
+      TeX-view-program-selection '((output-pdf "PDF Tools"))
+      TeX-source-correlate-start-server t
+      reftex-plug-into-AUCTeX t)
+
+(add-hook 'LaTeX-mode-hook #'turn-on-reftex)
+(add-hook 'LaTeX-mode-hook #'TeX-source-correlate-mode)
+(add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)
+#+end_src
+
+Refresh the PDF buffer after every successful compile. AUCTeX defers loading, and nothing pulls in the =auctex= feature itself, so the setup hangs off =tex=, which is where =TeX-after-compilation-finished-functions= actually lives.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'tex
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer))
+#+end_src
+
+* PDF
+
+** PDF viewing :HOOK:DEFER:
+
+Any file starting with =%PDF= opens in =pdf-view-mode=, as one continuous scroll instead of page by page.
+
+#+begin_src emacs-lisp
+(autoload 'pdf-view-mode "pdf-view" nil t)
+(add-to-list 'magic-mode-alist '("%PDF" . pdf-view-mode))
+
+(setq pdf-view-continuous t)
+(add-hook 'pdf-view-mode-hook #'pdf-view-roll-minor-mode)
+
+(with-eval-after-load 'pdf-tools
+  (pdf-loader-install))
+#+end_src
+
+SyncTeX backward search (click in the PDF, jump to the source). =pdf-sync-backward-search= hands this to =pop-to-buffer= as its action, and left unset it just splits the PDF's own frame. =reuse-window= with =reusable-frames= hands the jump to whatever frame already shows that source buffer; =pop-up-frame= only kicks in when no frame does.
+
+#+begin_src emacs-lisp
+(setq pdf-sync-backward-display-action
+      '((display-buffer-reuse-window display-buffer-pop-up-frame)
+        (reusable-frames . visible)
+        (inhibit-same-window . t)))
+#+end_src
+
+** PDF in its own frame
+
+Show the compiled PDF in a separate frame, instead of taking over the source window. =reuse-window= with =reusable-frames= picks up the frame from the previous compile, so re-running =C-c C-c= does not pile up frames.
+
+#+begin_src emacs-lisp
+(add-to-list 'display-buffer-alist
+             '((derived-mode . pdf-view-mode)
+               (display-buffer-reuse-window display-buffer-pop-up-frame)
+               (reusable-frames . visible)
+               (inhibit-same-window . t)
+               (inhibit-switch-frame . t)
+               (dedicated . t)))
+#+end_src
+
+* Coding
+
+** Buffers :HOOK:
+
+Line numbers, on-the-fly diagnostics, and spell checking restricted to comments and strings. Emacs Lisp files get outline folding on their =;;;= headings.
+
+#+begin_src emacs-lisp
+(add-hook 'prog-mode-hook       #'display-line-numbers-mode)
+(add-hook 'prog-mode-hook       #'flymake-mode)
+(add-hook 'prog-mode-hook       #'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook #'outline-minor-mode)
+#+end_src
+
+** Tree-sitter
+
+Remap the built-in modes to their tree-sitter version, but only where the grammar is actually installed.
+
+#+begin_src emacs-lisp
+(dolist (entry '((python-mode  python-ts-mode  python)
+                 (c-mode       c-ts-mode       c)
+                 (c++-mode     c++-ts-mode     cpp)
+                 (sh-mode      bash-ts-mode    bash)
+                 (js-mode      js-ts-mode      javascript)
+                 (js-json-mode json-ts-mode    json)
+                 (css-mode     css-ts-mode     css)
+                 (yaml-mode    yaml-ts-mode    yaml)))
+  (when (treesit-language-available-p (nth 2 entry))
+    (add-to-list 'major-mode-remap-alist (cons (nth 0 entry) (nth 1 entry)))))
+#+end_src
+
+Go has no non-tree-sitter mode to remap from, so it is registered directly.
+
+#+begin_src emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+(add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
+#+end_src
+
+** Language servers :HOOK:
+
+Start Eglot automatically for the languages that have a server installed.
+
+#+begin_src emacs-lisp
+(add-hook 'python-base-mode-hook #'eglot-ensure)
+(add-hook 'c-ts-mode-hook        #'eglot-ensure)
+(add-hook 'c++-ts-mode-hook      #'eglot-ensure)
+(add-hook 'go-ts-mode-hook       #'eglot-ensure)
+#+end_src
+
+** Version control :BINDING:HOOK:DEFER:
+
+Magit, with word-level highlighting in every hunk.
+
+#+begin_src emacs-lisp
+(setq magit-diff-refine-hunk 'all)
+(keymap-global-set "C-x g" #'magit-status)
+#+end_src
+
+=diff-hl= marks uncommitted changes in the fringe, updates them while typing (flydiff), and refreshes after Magit changed the repository.
+
+#+begin_src emacs-lisp
+(autoload 'diff-hl-magit-post-refresh "diff-hl" nil t)
+
+(add-hook 'prog-mode-hook  #'diff-hl-mode)
+(add-hook 'LaTeX-mode-hook #'diff-hl-mode)
+;; (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
+(add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
+
+(with-eval-after-load 'diff-hl
+  (diff-hl-flydiff-mode 1))
+#+end_src
+
+** Remote :DEFER:PERSONAL:
+
+TRAMP does not load the environment from the remote profile, so the directories holding the remote language servers are added to its search path by hand.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'tramp
+  (dolist (d '("/usr/lib/llvm/22/bin"
+               "/usr/lib/llvm/21/bin"))
+    (add-to-list 'tramp-remote-path d)))
+#+end_src
+
+* Experiments :INACTIVE:
+
+Not tangled. The =:INACTIVE:= tag on this heading switches off every block under it.
+
+#+begin_src emacs-lisp
+(setq debug-on-error t)
+#+end_src

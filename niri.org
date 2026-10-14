@@ -248,7 +248,7 @@ window-rule {
 }
 #+end_src
 
-The Noctalia settings window, at a fixed size.
+The Noctalia settings window at a fixed size.
 
 #+begin_src kdl
 window-rule {
@@ -258,6 +258,18 @@ window-rule {
     default-window-height { fixed 920; }
 }
 #+end_src
+
+The Emacs frame opened for a capture, by =Mod+Shift+C= below or by the =org-protocol= handler. Both name the frame =emacs-temp-frame=, and Emacs deletes it when the capture is done, see [[file:emacs.org::*Capture from the browser][Capture from the browser]].
+
+#+begin_src kdl
+window-rule {
+    // match app-id="^emacs(?:-[0-9]+)?$" title=r#"^CAPTURE-(?:.+)\.org$"#
+    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-temp-frame$"
+    open-floating true
+}
+#+end_src
+
+Other miscellaneous.
 
 #+begin_src kdl
 window-rule {
@@ -275,14 +287,9 @@ window-rule {
     match app-id="^wechat$" title="^Photos and Videos$"
     open-floating true
 }
-#+end_src
 
-The Emacs frame opened for a capture, by =Mod+Shift+C= below or by the =org-protocol= handler. Both name the frame =emacs-temp-frame=, and Emacs deletes it when the capture is done, see [[file:emacs.org::*Capture from the browser][Capture from the browser]].
-
-#+begin_src kdl
 window-rule {
-    // match app-id="^emacs(?:-[0-9]+)?$" title=r#"^CAPTURE-(?:.+)\.org$"#
-    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-temp-frame$"
+    match app-id="^org.strawberrymusicplayer.strawberry$"
     open-floating true
 }
 #+end_src
@@ -346,6 +353,7 @@ Lock, Emacs, capture, browser. The capture key opens a dedicated frame, which th
 Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
 Mod+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
 Mod+Shift+C hotkey-overlay-title="Org capture" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(org-capture)"; }
+Mod+Shift+A hotkey-overlay-title="Org calendar" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(calfw-org-open-calendar)";}
 Mod+B hotkey-overlay-title="Browser" { spawn "firefox"; }
 Mod+Shift+B hotkey-overlay-title="Browser incognito" { spawn "firefox" "--private-window"; }
 #+end_src

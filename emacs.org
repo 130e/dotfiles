@@ -197,6 +197,17 @@ Resize by pixel and do not allow automatic resizing due to font or chrome change
       frame-inhibit-implied-resize t)
 #+end_src
 
+*** Delete frame when done
+
+Kill the frame when its title matches. This is useful for one-off GUI popup. See [[*Capture from the browser][Capture from the browser]].
+
+#+begin_src emacs-lisp
+(defun my/del-temp-frame ()
+  "Delete frame if its frame title matches."
+  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
+    (delete-frame)))
+#+end_src
+
 ** Scrolling and mouse :MODE:
 
 #+begin_src emacs-lisp
@@ -271,9 +282,16 @@ No menu bar, tool bar or scroll bar, and a little breathing room on both sides.
 
 ** Theme
 
-=kaolin-themes= has to be loaded first, that is what puts its themes on =custom-theme-load-path=.
+Themes in Emacs is quite complicated. Some custom themes look good but don't always play well with other packages. Modus and its derivatives seem to play nice with other packages.
 
 #+begin_src emacs-lisp
+(require-theme 'modus-themes)
+(modus-themes-load-theme 'modus-vivendi-tinted)
+#+end_src
+
+Theme packages such as =kaolin-themes=.
+
+#+begin_src emacs-lisp :tangle no
 (require 'kaolin-themes)
 (load-theme 'kaolin-mono-light t)
 #+end_src
@@ -286,14 +304,16 @@ The desktop shell can also generate a theme matching the wallpaper.
   (load-theme 'noctalia t))
 #+end_src
 
-** Thin type :FACE:
+** Thin type :FACE:INACTIVE:
 
-Better prose reading experience, inspired by Nano-emacs. Thin type, and "bold" becomes only one step heavier.
+A fine prose reading experience, inspired by Nano-emacs. Thin type, and "bold" becomes only one step heavier. Though I found it uncomfortable at times.
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :weight 'light)
 (set-face-attribute 'bold    nil :weight 'regular)
 #+end_src
+
+#+RESULTS:
 
 ** Borders and status line :FACE:HOOK:
 
@@ -376,6 +396,12 @@ Prose buffers use the proportional font. Everything that has to line up (tables,
    'org-table 'org-formula 'org-code 'org-verbatim 'org-block
    'org-meta-line 'org-special-keyword 'org-property-value 'org-drawer
    'org-document-info-keyword 'org-checkbox 'org-date))
+
+(with-eval-after-load 'markdown-mode
+  (my/fixed-pitch-faces
+   'markdown-code-face 'markdown-pre-face 'markdown-inline-code-face
+   'markdown-table-face 'markdown-language-keyword-face
+   'markdown-language-info-face))
 
 (with-eval-after-load 'org-indent
   (my/fixed-pitch-faces 'org-indent))
@@ -468,8 +494,11 @@ Hide the markup and show the result: emphasis markers, drawers, entities, inline
 (setq org-hide-emphasis-markers t
       org-hide-drawer-startup t
       org-pretty-entities t
-      ;; org-ellipsis "…"
-      org-cycle-separator-lines 1         ; A fold keeps one empty line visible
+      org-ellipsis "…"
+      org-auto-align-tags nil
+      org-tags-column 0
+      org-agenda-tags-column 0
+      org-cycle-separator-lines 1
       org-startup-with-inline-images t
       org-image-actual-width '(600))
 #+end_src
@@ -526,14 +555,9 @@ Everything lands in the inbox and is refiled during review.
 (require 'org-protocol)
 #+end_src
 
-The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame has no purpose left, so it is deleted.
+The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame is [[*Delete frame when done][deleted]].
 
 #+begin_src emacs-lisp
-(defun my/del-temp-frame ()
-  "Delete frame if its frame title matches."
-  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
-    (delete-frame)))
-
 (add-hook 'org-capture-after-finalize-hook #'my/del-temp-frame)
 #+end_src
 
@@ -896,7 +920,7 @@ Magit, with word-level highlighting in every hunk.
 
 (add-hook 'prog-mode-hook  #'diff-hl-mode)
 (add-hook 'LaTeX-mode-hook #'diff-hl-mode)
-;; (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
+(add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
 (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
 
 (with-eval-after-load 'diff-hl
@@ -905,13 +929,17 @@ Magit, with word-level highlighting in every hunk.
 
 ** Remote :DEFER:PERSONAL:
 
-TRAMP does not load the environment from the remote profile, so the directories holding the remote language servers are added to its search path by hand.
+TRAMP builds its own PATH from the list in =tramp-remote-path=. The earlier entries are checked first. The list can contain literal string paths and special variables, for example:
+
+- =tramp-default-remote-path= : output of =getconf PATH= in remote.
+- =tramp-own-remote-path= : output of =echo $PATH= in a remote login shell.
 
 #+begin_src emacs-lisp
-(with-eval-after-load 'tramp
-  (dolist (d '("/usr/lib/llvm/22/bin"
-               "/usr/lib/llvm/21/bin"))
-    (add-to-list 'tramp-remote-path d)))
+  (with-eval-after-load 'tramp
+    (dolist (d '("/usr/lib/llvm/21/bin"
+                 "/usr/lib/llvm/22/bin"
+                 tramp-own-remote-path))
+      (add-to-list 'tramp-remote-path d)))
 #+end_src
 
 * Experiments :INACTIVE:

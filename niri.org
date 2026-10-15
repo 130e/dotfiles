@@ -228,7 +228,9 @@ window-rule {
 
 Small or transient windows that make no sense as a full-height column.
 
-Firefox picture-in-picture player.
+*** Firefox
+
+Picture-in-picture player.
 
 #+begin_src kdl
 window-rule {
@@ -248,16 +250,7 @@ window-rule {
 }
 #+end_src
 
-The Noctalia settings window at a fixed size.
-
-#+begin_src kdl
-window-rule {
-    match app-id="dev.noctalia.Noctalia"
-    open-floating true
-    default-column-width { fixed 1080; }
-    default-window-height { fixed 920; }
-}
-#+end_src
+*** Emacs
 
 The Emacs frame opened for a capture, by =Mod+Shift+C= below or by the =org-protocol= handler. Both name the frame =emacs-temp-frame=, and Emacs deletes it when the capture is done, see [[file:emacs.org::*Capture from the browser][Capture from the browser]].
 
@@ -268,6 +261,8 @@ window-rule {
     open-floating true
 }
 #+end_src
+
+*** Others
 
 Other miscellaneous.
 
@@ -290,6 +285,26 @@ window-rule {
 
 window-rule {
     match app-id="^org.strawberrymusicplayer.strawberry$"
+    open-floating true
+}
+#+end_src
+
+The Noctalia settings window at a fixed size.
+
+#+begin_src kdl
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+#+end_src
+
+Python ~matplotlib~ figures.
+
+#+begin_src kdl
+window-rule {
+    match app-id="^python3$" title="^Figure"
     open-floating true
 }
 #+end_src

@@ -480,10 +480,11 @@ Org is loaded eagerly rather than on first use: =org-protocol= has to be listeni
 ** Editing
 
 #+begin_src emacs-lisp
-(setq org-catch-invisible-edits 'show-and-error
-      org-special-ctrl-a/e t
-      org-insert-heading-respect-content t
-      org-return-follows-link t)          ; RET opens the link
+  (setq org-catch-invisible-edits 'show-and-error
+        org-special-ctrl-a/e t
+        org-insert-heading-respect-content t
+        org-return-follows-link t
+        org-src-preserve-indentation t)
 #+end_src
 
 ** Looks :HOOK:
@@ -871,7 +872,7 @@ Line numbers, on-the-fly diagnostics, and spell checking restricted to comments 
 
 ** Tree-sitter
 
-Remap the built-in modes to their tree-sitter version, but only where the grammar is actually installed.
+Remap the built-in modes to their tree-sitter version, if corresponding grammar is installed.
 
 #+begin_src emacs-lisp
 (dolist (entry '((python-mode  python-ts-mode  python)
@@ -920,11 +921,15 @@ Magit, with word-level highlighting in every hunk.
 
 (add-hook 'prog-mode-hook  #'diff-hl-mode)
 (add-hook 'LaTeX-mode-hook #'diff-hl-mode)
+(add-hook 'org-mode-hook   #'diff-hl-mode)
 (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
 (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
 
 (with-eval-after-load 'diff-hl
-  (diff-hl-flydiff-mode 1))
+  (diff-hl-margin-mode 1)
+  (diff-hl-dired-mode 1)
+  (diff-hl-flydiff-mode 1)
+  (diff-hl-show-hunk-mouse-mode 1))
 #+end_src
 
 ** Remote :DEFER:PERSONAL:

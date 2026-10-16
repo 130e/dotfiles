@@ -306,14 +306,12 @@ The desktop shell can also generate a theme matching the wallpaper.
 
 ** Thin type :FACE:INACTIVE:
 
-A fine prose reading experience, inspired by Nano-emacs. Thin type, and "bold" becomes only one step heavier. Though I found it uncomfortable at times.
+A fine prose reading experience, inspired by Nano-emacs. Though I found it uncomfortable at times. Make fonts one step thinner.
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :weight 'light)
 (set-face-attribute 'bold    nil :weight 'regular)
 #+end_src
-
-#+RESULTS:
 
 ** Borders and status line :FACE:HOOK:
 
@@ -772,8 +770,17 @@ A month view of the agenda. The command is not in the system autoloads, hence th
 =.md= files open in GitHub-flavoured Markdown mode, with the markup hidden and code blocks fontified in their own language. =gfm-mode= is not in the system autoloads either.
 
 #+begin_src emacs-lisp
-(autoload 'gfm-mode "markdown-mode" nil t)
-(add-to-list 'auto-mode-alist '("\\.md\\'" . gfm-mode))
+(autoload 'markdown-mode "markdown-mode"
+   "Major mode for editing Markdown files" t)
+(add-to-list 'auto-mode-alist
+             '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode))
+
+(autoload 'gfm-mode "markdown-mode"
+   "Major mode for editing GitHub Flavored Markdown files" t)
+(add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
+
+(with-eval-after-load 'markdown-mode
+  (define-key markdown-mode-map (kbd "C-c C-e") #'markdown-do))
 
 (setq markdown-command "pandoc"
       markdown-hide-markup t
@@ -940,11 +947,17 @@ TRAMP builds its own PATH from the list in =tramp-remote-path=. The earlier entr
 - =tramp-own-remote-path= : output of =echo $PATH= in a remote login shell.
 
 #+begin_src emacs-lisp
-  (with-eval-after-load 'tramp
-    (dolist (d '("/usr/lib/llvm/21/bin"
-                 "/usr/lib/llvm/22/bin"
-                 tramp-own-remote-path))
-      (add-to-list 'tramp-remote-path d)))
+(with-eval-after-load 'tramp
+  (dolist (d '("/usr/lib/llvm/21/bin"
+               "/usr/lib/llvm/22/bin"
+               tramp-own-remote-path))
+    (add-to-list 'tramp-remote-path d)))
+#+end_src
+
+Ensure remote ~dir-locals.el~ loads.
+
+#+begin_src emacs-lisp
+(setq enable-remote-dir-locals t)
 #+end_src
 
 * Experiments :INACTIVE:

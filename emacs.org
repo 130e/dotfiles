@@ -10,45 +10,24 @@ Every =emacs-lisp= block below is written, top to bottom, into a single =init.el
 
 The tangle target is computed by the =#+PROPERTY= line at the top: a block goes to =init.el= unless its heading, or any parent heading, carries the =:INACTIVE:= tag. A single block can still opt out with =:tangle no=.
 
-** Conventions
-
-There is no =use-package=. The outline does the organising, so one heading holds everything about one topic, and the code under it is plain Emacs Lisp:
-
-| use-package keyword | Written here as                                       |
-|---------------------+-------------------------------------------------------|
-| :ensure             | Nothing. Packages come from the system, see [[Packages]]  |
-| :demand             | (require 'feature)                                    |
-| :commands           | (autoload 'command "library" nil t)                   |
-| :bind               | (keymap-global-set "KEY" #'command)                   |
-| :hook               | (add-hook 'some-mode-hook #'function)                 |
-| :mode, :magic       | (add-to-list 'auto-mode-alist ...) and friends        |
-| :custom, :init      | (setq ...) at top level                               |
-| :config, :after     | (with-eval-after-load 'feature ...), only when needed |
-
-Two things =use-package= did silently now have to be spelled out:
-
-- Autoloads :: =:bind=, =:hook= and =:mode= generated an autoload for the command they named. Most packages ship their own, but a few commands are missing from the system autoloads and get an explicit =autoload= line.
-- Deferral :: A =setq= on a variable of a package that is not loaded yet is fine, the package keeps the value. Only code that calls into the package, or touches its faces, hooks and keymaps, needs =with-eval-after-load=.
-
 ** Tags
 
-- =:BINDING:=  The section defines some key binding
-- =:HOOK:=     The section installs some hook
-- =:ADVICE:=   The section installs some advice
-- =:FACE:=     The section modifies some face
-- =:MODE:=     The section activates a global mode
-- =:DEFER:=    Part of the section only runs once a package is loaded
-- =:PERSONAL:= The content is personal (paths, fonts) and should be adapted
-- =:OTHER:=    The section is tangled to a different file than =init.el=
-- =:INACTIVE:= The section is not tangled
+- =:BINDING:=  The section defines some key binding.
+- =:HOOK:=     The section installs some hook.
+- =:ADVICE:=   The section installs some advice.
+- =:FACE:=     The section modifies some face.
+- =:MODE:=     The section activates a global mode.
+- =:DEFER:=    Part of the section only runs once a package is loaded.
+- =:PERSONAL:= The content might need adapting per machine (paths, fonts).
+- =:OTHER:=    The section is tangled to a different file than =init.el=.
+- =:INACTIVE:= The section is not tangled.
 
 ** Packages
 
-Nothing is installed from here. These packages are expected on the =load-path=, installed by the system package manager (which also loads their autoloads through =site-gentoo=).
+These packages are expected on the =load-path=. Currently they are install from  =portage= and autoloads through =site-gentoo=.
 
 | Package       | Used in         | Purpose                                |
 |---------------+-----------------+----------------------------------------|
-| kaolin-themes | [[Theme]]           | Colour theme                           |
 | vertico       | [[Minibuffer]]      | Vertical minibuffer completion         |
 | marginalia    | [[Minibuffer]]      | Annotations for completion candidates  |
 | orderless     | [[Matching style]]  | Match space-separated terms, any order |
@@ -63,7 +42,11 @@ Nothing is installed from here. These packages are expected on the =load-path=, 
 | magit         | [[Version control]] | Git interface                          |
 | diff-hl       | [[Version control]] | Uncommitted changes in the fringe      |
 
-External programs: =pandoc= (Markdown preview and the conversion helpers), =dvisvgm= (Org LaTeX preview), =dot= (Babel), =firefox=, plus the language servers used by [[Language servers]].
+External programs:
+- =pandoc= :: Markdown preview and the conversion helpers.
+- =dvisvgm= :: Org LaTeX preview in SVG.
+- =dot= :: Compile dot figures.
+- plus the language servers used by [[Language servers]].
 
 * Base
 
@@ -84,7 +67,7 @@ When you customize a variable inside emacs, the preference can be stored in [[in
 (load custom-file :no-error-if-file-is-missing)
 #+end_src
 
-Trust every theme without asking, since none of them comes from an unknown source.
+Trust every theme without asking.
 
 #+begin_src emacs-lisp
 (setq custom-safe-themes t)
@@ -152,7 +135,6 @@ Basic editing stuffs. Spaces instead of tabs, matching parentheses, typing repla
 (setq-default indent-tabs-mode nil)
 (setq save-interprogram-paste-before-kill t)
 
-;; (cua-mode           1)
 (show-paren-mode       1)
 (electric-pair-mode    1)
 (delete-selection-mode 1)
@@ -210,9 +192,21 @@ Kill the frame when its title matches. This is useful for one-off GUI popup. See
 
 ** Scrolling and mouse :MODE:
 
+Allow smooth scrolling animations when using mouse wheel, touchpad or ~Page Up / Down~ keys.
+
 #+begin_src emacs-lisp
-(pixel-scroll-mode      1)
-(global-xref-mouse-mode 1)
+(pixel-scroll-precision-mode 1)
+(setq mouse-wheel-progressive-speed t)
+(setq pixel-scroll-precision-use-momentum t)
+(setq pixel-scroll-precision-interpolation-factor 0.4)
+(setq pixel-scroll-precision-interpolate-page t)
+#+end_src
+
+Cursor scrolling behavior when at top / bottom of the screen.
+
+#+begin_src emacs-lisp
+(setq scroll-conservatively 101
+      scroll-margin         0)
 #+end_src
 
 ** Help and search
@@ -313,7 +307,7 @@ A fine prose reading experience, inspired by Nano-emacs. Though I found it uncom
 (set-face-attribute 'bold    nil :weight 'regular)
 #+end_src
 
-** Borders and status line :FACE:HOOK:
+** Borders, mode line, and status line :FACE:HOOK:
 
 Borders, dividers and fringes melt into the background. The mode line is collapsed to a thin rule and the status moves up into the header line. The colours are read from the current theme, so the function runs again whenever a theme is enabled.
 
@@ -779,6 +773,9 @@ A month view of the agenda. The command is not in the system autoloads, hence th
    "Major mode for editing GitHub Flavored Markdown files" t)
 (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
 
+(autoload 'gfm-view-mode "markdown-mode"
+   "Major mode for viewing GitHub Flavored Markdown content." t)
+
 (with-eval-after-load 'markdown-mode
   (define-key markdown-mode-map (kbd "C-c C-e") #'markdown-do))
 
@@ -866,6 +863,14 @@ Show the compiled PDF in a separate frame, instead of taking over the source win
 
 * Coding
 
+** Interface :MODE:
+
+Allow clicking into xref definitions.
+
+#+begin_src emacs-lisp
+(global-xref-mouse-mode 1)
+#+end_src
+
 ** Buffers :HOOK:
 
 Line numbers, on-the-fly diagnostics, and spell checking restricted to comments and strings. Emacs Lisp files get outline folding on their =;;;= headings.
@@ -914,7 +919,7 @@ Start Eglot automatically for the languages that have a server installed.
 
 ** Version control :BINDING:HOOK:DEFER:
 
-Magit, with word-level highlighting in every hunk.
+Magit with word-level highlighting in every hunk.
 
 #+begin_src emacs-lisp
 (setq magit-diff-refine-hunk 'all)
@@ -936,7 +941,7 @@ Magit, with word-level highlighting in every hunk.
   (diff-hl-margin-mode 1)
   (diff-hl-dired-mode 1)
   (diff-hl-flydiff-mode 1)
-  (diff-hl-show-hunk-mouse-mode 1))
+  (global-diff-hl-show-hunk-mouse-mode 1))
 #+end_src
 
 ** Remote :DEFER:PERSONAL:
@@ -958,6 +963,34 @@ Ensure remote ~dir-locals.el~ loads.
 
 #+begin_src emacs-lisp
 (setq enable-remote-dir-locals t)
+#+end_src
+
+** Agent :BINDING:
+
+Copy a formatted prompt for the region or a defun.
+
+#+begin_src emacs-lisp
+(defun my/copy-prompt-stub (beg end)
+  "Format an agent prompt stub for the region or the defun at point."
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (let ((b (bounds-of-thing-at-point 'defun)))
+       (unless b (user-error "No region or defun at point"))
+       (list (car b) (cdr b)))))
+  (let* ((root (if-let ((p (project-current))) (project-root p) default-directory))
+         (file (file-relative-name (or buffer-file-name (user-error "Buffer has no file")) root))
+         (l1 (line-number-at-pos beg))
+         (l2 (line-number-at-pos (if (and (> end beg) (= (char-before end) ?\n)) (1- end) end)))
+         (lang (replace-regexp-in-string "\\(-ts\\)?-mode\\'" "" (symbol-name major-mode)))
+         (text (format "@%s#L%d-%d\n```%s\n%s\n```\n"
+                       file l1 l2 lang
+                       (string-trim-right (buffer-substring-no-properties beg end)))))
+    (kill-new text)
+    (deactivate-mark)
+    (message "Copied %s:%d-%d as prompt stub" file l1 l2)))
+
+(keymap-global-set "C-c C-a" #'my/copy-prompt-stub)
 #+end_src
 
 * Experiments :INACTIVE:

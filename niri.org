@@ -304,7 +304,7 @@ Python ~matplotlib~ figures.
 
 #+begin_src kdl
 window-rule {
-    match app-id="^python3$" title="^Figure"
+    match app-id="^python" title="^Figure"
     open-floating true
 }
 #+end_src

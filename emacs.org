@@ -67,12 +67,6 @@ When you customize a variable inside emacs, the preference can be stored in [[in
 (load custom-file :no-error-if-file-is-missing)
 #+end_src
 
-Trust every theme without asking.
-
-#+begin_src emacs-lisp
-(setq custom-safe-themes t)
-#+end_src
-
 ** Startup :PERSONAL:
 
 No splash screen, start in the inbox instead.
@@ -258,9 +252,9 @@ The configuration must be in order:
 ** Fonts :FACE:PERSONAL:
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default        nil :family "Iosevka"        :height 130)
-(set-face-attribute 'variable-pitch nil :family "Iosevka Etoile" :height 1.0)
-(set-face-attribute 'fixed-pitch    nil :family "Iosevka"        :height 1.0)
+(set-face-attribute 'default        nil :family "Iosevka"         :height 130)
+(set-face-attribute 'variable-pitch nil :family "Iosevka Etoile"  :height 1.0)
+(set-face-attribute 'fixed-pitch    nil :family "Iosevka Term"    :height 1.0)
 #+end_src
 
 ** Chrome :MODE:
@@ -274,14 +268,25 @@ No menu bar, tool bar or scroll bar, and a little breathing room on both sides.
 (set-fringe-mode 10)
 #+end_src
 
-** Theme
+** Theme :PERSONAL:
 
-Themes in Emacs is quite complicated. Some custom themes look good but don't always play well with other packages. Modus and its derivatives seem to play nice with other packages.
+Theming in Emacs is quite complicated. Usually a theme only set defaults for common modes. So [[*Mixed pitch][per mode-face tuning]] might be needed.
+
+Trust every theme without asking.
 
 #+begin_src emacs-lisp
-(require-theme 'modus-themes)
-(modus-themes-load-theme 'modus-vivendi-tinted)
+(setq custom-safe-themes t)
 #+end_src
+
+*** Modus variants
+
+#+begin_src emacs-lisp
+;; (setq modus-themes-mixed-fonts t)
+(require-theme 'modus-themes)
+(modus-themes-load-theme 'modus-operandi)
+#+end_src
+
+*** Other themes
 
 Theme packages such as =kaolin-themes=.
 
@@ -290,9 +295,11 @@ Theme packages such as =kaolin-themes=.
 (load-theme 'kaolin-mono-light t)
 #+end_src
 
+*** Theme by desktop shell :INACTIVE:
+
 The desktop shell can also generate a theme matching the wallpaper.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
   (add-to-list 'custom-theme-load-path desktop-theme-dir)
   (load-theme 'noctalia t))
@@ -367,7 +374,14 @@ Headings keep the default colour and are only one step heavier. In Org they also
 
 ** Mixed pitch :FACE:HOOK:DEFER:
 
-Prose buffers use the proportional font. Everything that has to line up (tables, code, drawers, dates) is pinned back to the fixed-pitch one.
+Prose buffers use the proportional font. Otherwise uses default (not necessarily monospace).
+
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook      #'variable-pitch-mode)
+(add-hook 'markdown-mode-hook #'variable-pitch-mode)
+#+end_src
+
+Define explicitly which faces should be fixed-pitch as needed.
 
 #+begin_src emacs-lisp
 (defun my/fixed-pitch-faces (&rest faces)
@@ -380,14 +394,11 @@ Prose buffers use the proportional font. Everything that has to line up (tables,
              (remq 'fixed-pitch
                    (if (eq old 'unspecified) nil (ensure-list old))))))))
 
-(add-hook 'org-mode-hook      #'variable-pitch-mode)
-(add-hook 'markdown-mode-hook #'variable-pitch-mode)
-
 (with-eval-after-load 'org
   (my/fixed-pitch-faces
    'org-table 'org-formula 'org-code 'org-verbatim 'org-block
    'org-meta-line 'org-special-keyword 'org-property-value 'org-drawer
-   'org-document-info-keyword 'org-checkbox 'org-date))
+   'org-document-info-keyword 'org-date))
 
 (with-eval-after-load 'markdown-mode
   (my/fixed-pitch-faces
@@ -395,11 +406,8 @@ Prose buffers use the proportional font. Everything that has to line up (tables,
    'markdown-table-face 'markdown-language-keyword-face
    'markdown-language-info-face))
 
-(with-eval-after-load 'org-indent
-  (my/fixed-pitch-faces 'org-indent))
-
 (with-eval-after-load 'org-modern
-  (my/fixed-pitch-faces 'org-modern-label 'org-modern-symbol))
+  (my/fixed-pitch-faces 'org-modern-label))
 #+end_src
 
 * Completion
@@ -524,18 +532,16 @@ Everything lands in the inbox and is refiled during review.
 (setq org-capture-templates
       '(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
          "* TODO %?\n%U" :empty-lines 1)
-        ("s" "Scheduled todo" entry (file "~/RoamNotes/inbox.org")
-         "* TODO %?\nSCHEDULED: %^t\n%U" :empty-lines 1)
-        ("d" "Deadline todo" entry (file "~/RoamNotes/inbox.org")
-         "* TODO %?\nDEADLINE: %^t\n%U" :empty-lines 1)
         ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
          "* TODO %?\n%U\n%a" :empty-lines 1)
         ("w" "Quote selected text and link" entry (file "~/RoamNotes/inbox.org")
          "* %:description\n%U\n%:link\n\n#+begin_quote\n%i\n#+end_quote\n%?" :empty-lines 1)
-        ;; Meetings land in the inbox too; refile to a project during review.
         ("m" "Meeting" entry (file "~/RoamNotes/inbox.org")
          "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
-         :empty-lines 1 :clock-in t :clock-resume t)))
+         :empty-lines 1 :clock-in t :clock-resume t)
+        ("s" "Schedule" entry (file "~/RoamNotes/inbox.org")
+         "* %?\n%^T\n%U" :empty-lines 1)
+        ))
 
 (add-hook 'org-capture-mode-hook #'delete-other-windows)
 #+end_src
@@ -759,6 +765,13 @@ A month view of the agenda. The command is not in the system autoloads, hence th
 (keymap-global-set "C-c m" #'calfw-org-open-calendar)
 #+end_src
 
+Use fixed-pitch font in calendar.
+
+#+begin_src emacs-lisp
+(defun my/calfw-fixed-pitch () (buffer-face-set 'fixed-pitch))
+(add-hook 'calfw-calendar-mode-hook  #'my/calfw-fixed-pitch)
+#+end_src
+
 * Markdown
 
 =.md= files open in GitHub-flavoured Markdown mode, with the markup hidden and code blocks fontified in their own language. =gfm-mode= is not in the system autoloads either.
@@ -930,16 +943,18 @@ Magit with word-level highlighting in every hunk.
 
 #+begin_src emacs-lisp
 (autoload 'diff-hl-magit-post-refresh "diff-hl" nil t)
+(autoload 'turn-on-diff-hl-mode "diff-hl")
 
-(add-hook 'prog-mode-hook  #'diff-hl-mode)
-(add-hook 'LaTeX-mode-hook #'diff-hl-mode)
-(add-hook 'org-mode-hook   #'diff-hl-mode)
+(add-hook 'prog-mode-hook  #'turn-on-diff-hl-mode)
+(add-hook 'text-mode-hook  #'turn-on-diff-hl-mode)
+(add-hook 'conf-mode-hook  #'turn-on-diff-hl-mode)
+(add-hook 'dired-mode-hook #'diff-hl-dired-mode)
+
 (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
 (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
 
 (with-eval-after-load 'diff-hl
   (diff-hl-margin-mode 1)
-  (diff-hl-dired-mode 1)
   (diff-hl-flydiff-mode 1)
   (global-diff-hl-show-hunk-mouse-mode 1))
 #+end_src

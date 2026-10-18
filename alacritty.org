@@ -34,12 +34,10 @@ padding = { x = 12, y = 12 }
 
 * Font
 
-The same family and size as the default face in [[file:emacs.org::*Fonts][emacs.org]].
-
 #+begin_src toml
 [font]
 size = 13.0
-normal = { family = "Iosevka" }
+normal = { family = "Iosevka Term" }
 #+end_src
 
 * Cursor and mouse

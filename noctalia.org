@@ -68,11 +68,11 @@ show_label = false
 hide_when_no_media = true
 #+end_src
 
-Date and 12-hour time. The format string is strftime-like.
+Clock widget style.
 
 #+begin_src toml
 [widget.clock]
-format = "📅 {:%a %b %d} 🕰 {:%I:%M %p}"
+format = "{:%I:%M %p} - {:%b %d %a}"
 #+end_src
 
 * Notifications and OSD

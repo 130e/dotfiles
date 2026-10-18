@@ -517,7 +517,7 @@ Hide the markup and show the result: emphasis markers, drawers, entities, inline
 State changes are logged into the =LOGBOOK= drawer. =WAIT= and =CANCELLED= ask for a note.
 
 #+begin_src emacs-lisp
-(setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|"
+(setq org-todo-keywords '((sequence "TODO(t)" "WAIT(w@/!)" "|"
                                     "DONE(d!)" "CANCELLED(c@)"))
       org-log-done 'time
       org-log-into-drawer t

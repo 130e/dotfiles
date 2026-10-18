@@ -35,7 +35,7 @@ Note that Noctalia seems to regenerate the application theme templates when chan
 
 #+begin_src toml
 [theme]
-builtin = "Noctalia"
+builtin = "Nord"
 mode = "auto"
 
     [theme.templates]
@@ -46,16 +46,28 @@ mode = "auto"
 
 #+begin_src toml
 [bar.default]
+end = [ "media", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "date" ]
 start = [ "launcher", "workspaces" ]
 #+end_src
 
 ** Widgets
 
-Icons only for brightness, network and volume. The media widget disappears when nothing is playing.
-
 #+begin_src toml
+[widget.battery]
+label_content = "rate"
+
 [widget.brightness]
 show_label = false
+
+[widget.clock]
+format = "{:%R}"
+tooltip_format = "{:%Z %z}"
+
+[widget.date]
+format = "{:%x %a}"
+
+[widget.media]
+hide_when_no_media = true
 
 [widget.network]
 show_label = false
@@ -63,16 +75,6 @@ show_label = false
 [widget.volume]
 mute_color = "secondary"
 show_label = false
-
-[widget.media]
-hide_when_no_media = true
-#+end_src
-
-Clock widget style.
-
-#+begin_src toml
-[widget.clock]
-format = "{:%I:%M %p} - {:%b %d %a}"
 #+end_src
 
 * Notifications and OSD

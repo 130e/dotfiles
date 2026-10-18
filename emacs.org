@@ -595,15 +595,14 @@ Archived entries go to a datetree, filed by their =CLOSED= date. This can be ove
 (setq org-archive-location "~/RoamNotes/archive.org::datetree/")
 #+end_src
 
-** Clocking and timer
-
-Clocking is what makes "when/where did I do this" answerable later. =C-c C-x C-i= clocks in, =C-c C-x C-o= out, =C-c C-x C-j= jumps to the running clock.
+** [[info:org#Clocking Work Time][Clocking Work Time]]
 
 #+begin_src emacs-lisp
 (setq org-clock-persist 'history
       org-clock-in-resume t
       org-clock-into-drawer t
       org-clock-out-remove-zero-time-clocks t
+      org-clock-auto-clockout-timer 3600
       org-clock-report-include-clocking-task t)
 (org-clock-persistence-insinuate)
 #+end_src
@@ -719,40 +718,39 @@ Unwrap hard-wrapped Org text by round-tripping the region through pandoc.
 
 * Agenda
 
-** Files :PERSONAL:
+** Setup :PERSONAL:
 
 #+begin_src emacs-lisp
+(require 'org-habit)
 (setq org-agenda-files '("~/RoamNotes/inbox.org"
                          "~/RoamNotes/life.org"
                          "~/RoamNotes/routine.org"
+                         "~/RoamNotes/habit.org"
                          "~/RoamNotes/projects/"))
 #+end_src
 
 ** View
 
-One day at a time, weeks start on Sunday, compact blocks.
+One day at a time, weeks start on Sunday.
 
 #+begin_src emacs-lisp
 (setq org-agenda-span 'day
       org-agenda-start-on-weekday 0
       calendar-week-start-day 0
       org-agenda-show-all-dates nil
-      org-agenda-compact-blocks t
+      org-agenda-compact-blocks nil
       org-agenda-time-grid '((daily today require-timed remove-match)
                              (600 700 900 1200 1400 1800 2100)
                              " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
       org-agenda-current-time-string "⭠ now ─────────"
+      org-habit-graph-column 60
+      org-habit-show-habits-only-for-today t
+      org-habit-show-all-today nil
       org-agenda-sorting-strategy
       '((agenda time-up urgency-down category-keep)
         (todo urgency-down category-keep)
         (tags urgency-down category-keep)
         (search category-keep)))
-#+end_src
-
-** Habits
-
-#+begin_src emacs-lisp
-(require 'org-habit)
 #+end_src
 
 ** Calendar :BINDING:

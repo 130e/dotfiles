@@ -4,61 +4,79 @@
 
 * About
 
-** How this file works
+** Usage
 
-Every =emacs-lisp= block below is written, top to bottom, into a single =init.el= by =C-c C-v t= (org-babel-tangle). The order of the headings is therefore the load order.
-
-The tangle target is computed by the =#+PROPERTY= line at the top: a block goes to =init.el= unless its heading, or any parent heading, carries the =:INACTIVE:= tag. A single block can still opt out with =:tangle no=.
-
-** Tags
-
-- =:BINDING:=  The section defines some key binding.
-- =:HOOK:=     The section installs some hook.
-- =:ADVICE:=   The section installs some advice.
-- =:FACE:=     The section modifies some face.
-- =:MODE:=     The section activates a global mode.
-- =:DEFER:=    Part of the section only runs once a package is loaded.
-- =:PERSONAL:= The content might need adapting per machine (paths, fonts).
-- =:OTHER:=    The section is tangled to a different file than =init.el=.
-- =:INACTIVE:= The section is not tangled.
-
-** Packages
-
-These packages are expected on the =load-path=. Currently they are install from  =portage= and autoloads through =site-gentoo=.
-
-| Package       | Used in         | Purpose                                |
-|---------------+-----------------+----------------------------------------|
-| vertico       | [[Minibuffer]]      | Vertical minibuffer completion         |
-| marginalia    | [[Minibuffer]]      | Annotations for completion candidates  |
-| orderless     | [[Matching style]]  | Match space-separated terms, any order |
-| which-key     | [[Key hints]]       | Show available keys after a prefix     |
-| company       | [[In-buffer]]       | Completion popup while typing          |
-| org-modern    | [[Looks]]           | Prettier Org buffers and agenda        |
-| org-roam      | [[Roam]]            | Linked notes with backlinks            |
-| calfw         | [[Calendar]]        | Month calendar fed by the agenda       |
-| markdown-mode | [[Markdown]]        | Markdown and GitHub-flavoured Markdown |
-| auctex        | [[AUCTeX]]          | LaTeX editing                          |
-| pdf-tools     | [[PDF viewing]]     | PDF viewer with SyncTeX                |
-| magit         | [[Version control]] | Git interface                          |
-| diff-hl       | [[Version control]] | Uncommitted changes in the fringe      |
-
-External programs:
-- =pandoc= :: Markdown preview and the conversion helpers.
-- =dvisvgm= :: Org LaTeX preview in SVG.
-- =dot= :: Compile dot figures.
-- plus the language servers used by [[Language servers]].
-
-* Base
-
-** Header
-
-Lexical bindings.
+Every =emacs-lisp= block below is written, top to bottom, into a single =init.el= by =C-c C-v t= (org-babel-tangle). The order of the headings is therefore the load order. With that said, the header below must stay at top of file.
 
 #+begin_src emacs-lisp
 ;;; init.el --- generated from emacs.org, do not edit -*- lexical-binding: t -*-
 #+end_src
 
-** Custom-file
+** Tags
+
+- =:BIND:=  The section defines some key binding.
+- =:HOOK:=     The section installs some hook.
+- =:ADVICE:=   The section installs some advice.
+- =:FACE:=     The section modifies some face.
+- =:MODE:=     The section activates *global* mode.
+- =:DEFER:=    Part of the section only runs once a package is loaded.
+- =:PERSONAL:= The content might need adapting per machine (paths, fonts).
+- =:OTHER:=    The section is tangled to a different file than =init.el=.
+- =:INACTIVE:= The section is not tangled.
+- =:FIX:= The section implement /temporary/ tweaks due to my machine's build.
+
+* Package management
+
+** Gentoo =app-emacs/*=
+
+I install these packages from Gentoo Emacs overlay. They are loaded by =/etc/emacs/site-start.el= and then =/usr/share/emacs/site-lisp/site-gentoo.el=.
+
+| Package       | Used in         | Purpose                               |
+|---------------+-----------------+---------------------------------------|
+| vertico       | [[Minibuffer]]      | Vertical minibuffer completion        |
+| consult       | [[Consult]]         | Search and navigation commands        |
+| marginalia    | [[Minibuffer]]      | Annotations for completion candidates |
+| orderless     | [[Matching style]]  | Match space-separated terms           |
+| which-key     | [[Key hints]]       | Display available keybindings         |
+| company       | [[In-buffer]]       | Completion popup while typing         |
+| org-modern    | [[Looks]]           | Prettier Org buffers and agenda       |
+| org-roam      | [[Roam]]            | Linked notes with backlinks           |
+| calfw         | [[Calendar]]        | Month calendar fed by the agenda      |
+| markdown-mode | [[Markdown]]        | Markdown                              |
+| auctex        | [[AUCTeX]]          | LaTeX                                 |
+| pdf-tools     | [[PDF viewing]]     | PDF viewer with SyncTeX               |
+| magit         | [[Version control]] | Git interface                         |
+| diff-hl       | [[Version control]] | Visualize diff in the fringe          |
+
+** External programs
+
+- =pandoc= :: Markdown preview and the conversion helpers.
+- =dvisvgm= :: Org LaTeX preview in SVG.
+- =dot= :: Compile dot figures.
+- lilypond :: music sheets.
+- plus the language servers used by [[Language servers]].
+
+* Basic settings
+
+** Startup :PERSONAL:
+
+Homepage. Experimental.
+
+#+begin_src emacs-lisp
+(defun my/initial-buffer ()
+  "Show org-file and a scratch elisp buffer by default."
+  (let ((org (find-file-noselect "~/RoamNotes/inbox.org")))
+    (delete-other-windows)
+    (switch-to-buffer org)
+    (set-window-buffer (split-window-below -12)
+                       (get-scratch-buffer-create))
+    org))
+
+(setq inhibit-startup-message t
+      initial-buffer-choice   "~/RoamNotes/inbox.org")
+#+end_src
+
+** Files :HOOK:
 
 When you customize a variable inside emacs, the preference can be stored in [[info:emacs#Saving Customizations][a separate file]] (else emacs modifies your config file directly).
 
@@ -66,28 +84,6 @@ When you customize a variable inside emacs, the preference can be stored in [[in
 (setq custom-file (locate-user-emacs-file "custom.el"))
 (load custom-file :no-error-if-file-is-missing)
 #+end_src
-
-** Startup :PERSONAL:
-
-No splash screen, start in the inbox instead.
-
-#+begin_src emacs-lisp
-(setq inhibit-startup-message t
-      initial-buffer-choice   "~/RoamNotes/inbox.org")
-#+end_src
-
-** Prompts and feedback
-
-Answer with a single key, and stay quiet.
-
-#+begin_src emacs-lisp
-(setq use-short-answers t
-      read-answer-short t
-      ring-bell-function 'ignore
-      visible-bell       nil)
-#+end_src
-
-** Files :HOOK:
 
 Backups go into one directory instead of next to each file.
 
@@ -109,13 +105,22 @@ Reload buffers whose file changed on disk.
 (global-auto-revert-mode 1)
 #+end_src
 
+** QoL
+
+#+begin_src emacs-lisp
+(setq use-short-answers t
+      read-answer-short t
+      ring-bell-function 'ignore
+      visible-bell       nil)
+#+end_src
+
 ** Session persistence :MODE:
 
-Remember recent files, the cursor position in each file, and minibuffer history. Bookmarks are saved as soon as they change.
+Remember recent files, the cursor position in each file, and minibuffer history. Save bookmarks as soon as it's updated.
 
 #+begin_src emacs-lisp
 (setq history-length     25
-      bookmark-save-flag 1)
+      bookmark-save-flag 0)
 (recentf-mode    1)
 (save-place-mode 1)
 (savehist-mode   1)
@@ -150,16 +155,15 @@ Only show trailing whitespace in certain modes.
   (setq-local show-trailing-whitespace t))
 
 (add-hook 'prog-mode-hook #'my/set-trailing-whitespace)
+(add-hook 'markdown-mode-hook #'my/set-trailing-whitespace)
 (add-hook 'org-mode-hook  #'my/set-trailing-whitespace)
 #+end_src
 
-** Keys :BINDING:
+** Custom keybindings :BIND:
 
 #+begin_src emacs-lisp
 (keymap-global-set "C-z"   #'undo)
 (keymap-global-set "C-S-z" #'undo-redo)
-(keymap-global-set "C-x f" #'find-file)
-(keymap-global-set "C-c 5" #'other-frame-prefix)
 #+end_src
 
 ** Windows and frames
@@ -235,10 +239,92 @@ One Dired buffer at a time, recursive operations without asking, deletions go to
       dired-mouse-drag-files                           t)
 #+end_src
 
-** Diff
+** Consult: Enhanced built-in :BIND:ADVICE:DEFER:
+
+Replace a selected set of built-in functions with behavior expected by modern editors. Adapted from the [[https://github.com/minad/consult#use-package-example][Consult README]].
 
 #+begin_src emacs-lisp
-(setq diff-font-lock-syntax nil)
+;; C-c bindings in `mode-specific-map'
+(keymap-global-set "C-c M-x" #'consult-mode-command)
+(keymap-global-set "C-c h"   #'consult-history)
+(keymap-global-set "C-c k"   #'consult-kmacro)
+(keymap-global-set "C-c m"   #'consult-man)
+(keymap-global-set "C-c i"   #'consult-info)
+(keymap-global-set "<remap> <Info-search>" #'consult-info)
+
+;; C-x bindings in `ctl-x-map'
+(keymap-global-set "C-x M-:" #'consult-complex-command)     ;; orig. repeat-complex-command
+(keymap-global-set "C-x b"   #'consult-buffer)              ;; orig. switch-to-buffer
+(keymap-global-set "C-x 4 b" #'consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+(keymap-global-set "C-x 5 b" #'consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+(keymap-global-set "C-x t b" #'consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+(keymap-global-set "C-x r b" #'consult-bookmark)            ;; orig. bookmark-jump
+(keymap-global-set "C-x p b" #'consult-project-buffer)      ;; orig. project-switch-to-buffer
+
+;; Registers
+(keymap-global-set "M-#"   #'consult-register-load)
+(keymap-global-set "M-'"   #'consult-register-store)        ;; orig. abbrev-prefix-mark
+(keymap-global-set "C-M-#" #'consult-register)
+
+(keymap-global-set "M-y" #'consult-yank-pop)                ;; orig. yank-pop
+
+;; M-g bindings in `goto-map'
+(keymap-global-set "M-g e"   #'consult-compile-error)
+(keymap-global-set "M-g r"   #'consult-grep-match)
+(keymap-global-set "M-g f"   #'consult-flymake)
+(keymap-global-set "M-g g"   #'consult-goto-line)           ;; orig. goto-line
+(keymap-global-set "M-g M-g" #'consult-goto-line)           ;; orig. goto-line
+(keymap-global-set "M-g o"   #'consult-outline)
+(keymap-global-set "M-g m"   #'consult-mark)
+(keymap-global-set "M-g k"   #'consult-global-mark)
+(keymap-global-set "M-g i"   #'consult-imenu)
+(keymap-global-set "M-g I"   #'consult-imenu-multi)
+
+;; M-s bindings in `search-map'
+(keymap-global-set "M-s d" #'consult-fd)
+(keymap-global-set "M-s c" #'consult-locate)
+(keymap-global-set "M-s g" #'consult-grep)
+(keymap-global-set "M-s G" #'consult-git-grep)
+(keymap-global-set "M-s r" #'consult-ripgrep)
+(keymap-global-set "M-s l" #'consult-line)
+(keymap-global-set "M-s L" #'consult-line-multi)
+(keymap-global-set "M-s k" #'consult-keep-lines)
+(keymap-global-set "M-s u" #'consult-focus-lines)
+
+;; Isearch: M-s l / M-s L here let `consult-line' pick up the search string
+(keymap-global-set "M-s e" #'consult-isearch-history)
+(keymap-set isearch-mode-map "M-e"   #'consult-isearch-history) ;; orig. isearch-edit-string
+(keymap-set isearch-mode-map "M-s e" #'consult-isearch-history) ;; orig. isearch-edit-string
+(keymap-set isearch-mode-map "M-s l" #'consult-line)
+(keymap-set isearch-mode-map "M-s L" #'consult-line-multi)
+
+;; Minibuffer history
+(keymap-set minibuffer-local-map "M-s" #'consult-history)   ;; orig. next-matching-history-element
+(keymap-set minibuffer-local-map "M-r" #'consult-history)   ;; orig. previous-matching-history-element
+#+end_src
+
+Nicer register preview window, and Consult for picking xref locations.
+
+#+begin_src emacs-lisp
+(advice-add #'register-preview :override #'consult-register-window)
+(setq register-preview-delay 0.5)
+
+(setq xref-show-xrefs-function       #'consult-xref
+      xref-show-definitions-function #'consult-xref)
+#+end_src
+
+Preview is immediate except for slow sources (debounced), and =<= narrows candidates (e.g. =< b= for buffers only in =consult-buffer=).
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'consult
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep consult-man
+   consult-bookmark consult-recent-file consult-xref
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
+   :preview-key '(:debounce 0.4 any))
+  (setq consult-narrow-key "<"))
 #+end_src
 
 * Appearance
@@ -252,9 +338,15 @@ The configuration must be in order:
 ** Fonts :FACE:PERSONAL:
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default        nil :family "Iosevka"         :height 130)
+(set-face-attribute 'default        nil :family "Iosevka"         :height 120)
 (set-face-attribute 'variable-pitch nil :family "Iosevka Etoile"  :height 1.0)
 (set-face-attribute 'fixed-pitch    nil :family "Iosevka Term"    :height 1.0)
+#+end_src
+
+*** Font-locks
+
+#+begin_src emacs-lisp
+(setq diff-font-lock-syntax nil)
 #+end_src
 
 ** Chrome :MODE:
@@ -266,6 +358,15 @@ No menu bar, tool bar or scroll bar, and a little breathing room on both sides.
 (tool-bar-mode   0)
 (scroll-bar-mode 0)
 (set-fringe-mode 10)
+#+end_src
+
+** Tab bar :INACTIVE:
+
+Always show tab bar and allow going back tab's history.
+
+#+begin_src emacs-lisp
+(setopt tab-bar-show 0)
+(setopt tab-bar-history-mode t)
 #+end_src
 
 ** Theme :PERSONAL:
@@ -286,11 +387,11 @@ Trust every theme without asking.
 (modus-themes-load-theme 'modus-operandi)
 #+end_src
 
-*** Other themes
+*** Other themes :INACTIVE:
 
 Theme packages such as =kaolin-themes=.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (require 'kaolin-themes)
 (load-theme 'kaolin-mono-light t)
 #+end_src
@@ -314,7 +415,7 @@ A fine prose reading experience, inspired by Nano-emacs. Though I found it uncom
 (set-face-attribute 'bold    nil :weight 'regular)
 #+end_src
 
-** Borders, mode line, and status line :FACE:HOOK:
+** Borders, mode line, and status line :FACE:HOOK:INACTIVE:
 
 Borders, dividers and fringes melt into the background. The mode line is collapsed to a thin rule and the status moves up into the header line. The colours are read from the current theme, so the function runs again whenever a theme is enabled.
 
@@ -412,7 +513,7 @@ Define explicitly which faces should be fixed-pitch as needed.
 
 * Completion
 
-** Minibuffer :MODE:
+** Minibuffer style :MODE:
 
 Vertico shows the candidates as a vertical list, Marginalia annotates them.
 
@@ -421,9 +522,10 @@ Vertico shows the candidates as a vertical list, Marginalia annotates them.
       vertico-cycle  t)
 (vertico-mode    1)
 (marginalia-mode 1)
+(which-key-mode 1)
 #+end_src
 
-** Matching style
+** Matching style: Orderless
 
 Orderless matches space-separated terms in any order. File names keep partial completion, so =/u/s/e= still expands to =/usr/share/emacs=.
 
@@ -446,19 +548,23 @@ The built-in alternative, kept for reference.
       global-completion-preview-mode t)
 #+end_src
 
-** Key hints :MODE:
-
-#+begin_src emacs-lisp
-(which-key-mode 1)
-#+end_src
-
-** In-buffer :MODE:
+** In-buffer completion: Company :MODE:
 
 Company pops up completions while typing, and also looks for words in the other buffers.
 
 #+begin_src emacs-lisp
 (setq company-dabbrev-other-buffers t)
 (global-company-mode 1)
+#+end_src
+
+** Minibuffer action: Embark :BIND:
+
+Using Embark to perform actions quickly on minibuffer completion entries.
+
+#+begin_src emacs-lisp
+(keymap-global-set "C-."   #'embark-act)
+(keymap-global-set "C-;"   #'embark-dwim)
+(keymap-global-set "C-h b"   #'embark-bindings) ;; replacement
 #+end_src
 
 * Org
@@ -469,7 +575,7 @@ Org is loaded eagerly rather than on first use: =org-protocol= has to be listeni
 (require 'org)
 #+end_src
 
-** Keys :BINDING:
+** Keys :BIND:
 
 #+begin_src emacs-lisp
 (keymap-global-set "C-c a" #'org-agenda)
@@ -487,7 +593,7 @@ Org is loaded eagerly rather than on first use: =org-protocol= has to be listeni
         org-src-preserve-indentation t)
 #+end_src
 
-** Looks :HOOK:
+** Appearance :HOOK:
 
 Hide the markup and show the result: emphasis markers, drawers, entities, inline images.
 
@@ -514,12 +620,10 @@ Hide the markup and show the result: emphasis markers, drawers, entities, inline
 
 ** Todo and logging
 
-State changes are logged into the =LOGBOOK= drawer. =WAIT= and =CANCELLED= ask for a note.
+State changes are logged into the =LOGBOOK= drawer. I have considered things like =WAIT= and =CANCELLED= but decided against that. Scheduled is basically "wait" and canceled ones can be consider as "done".
 
 #+begin_src emacs-lisp
-(setq org-todo-keywords '((sequence "TODO(t)" "WAIT(w@/!)" "|"
-                                    "DONE(d!)" "CANCELLED(c@)"))
-      org-log-done 'time
+(setq org-log-done 'time
       org-log-into-drawer t
       org-log-repeat 'time)
 #+end_src
@@ -531,17 +635,15 @@ Everything lands in the inbox and is refiled during review.
 #+begin_src emacs-lisp
 (setq org-capture-templates
       '(("t" "Todo" entry (file "~/RoamNotes/inbox.org")
-         "* TODO %?\n%U" :empty-lines 1)
+         "* TODO %?\n:PROPERTIES:\n:CREATED:  %U\n:END:" :empty-lines 1)
+        ("n" "note" entry (file "~/RoamNotes/inbox.org")
+         "* %?\n:PROPERTIES:\n:CREATED:  %U\n:END:" :empty-lines 1)
         ("l" "Todo from link" entry (file "~/RoamNotes/inbox.org")
-         "* TODO %?\n%U\n%a" :empty-lines 1)
+         "* TODO %? (%a):PROPERTIES:\n:CREATED:  %U\n:END:" :empty-lines 1)
         ("w" "Quote selected text and link" entry (file "~/RoamNotes/inbox.org")
-         "* %:description\n%U\n%:link\n\n#+begin_quote\n%i\n#+end_quote\n%?" :empty-lines 1)
+         "* [[%:link][%:description]]\n:PROPERTIES:\n:CREATED:  %U\n:END:\n#+begin_quote\n%i\n#+end_quote\n%?" :empty-lines 1)
         ("m" "Meeting" entry (file "~/RoamNotes/inbox.org")
-         "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:ATTENDEES: %^{With}\n:END:\n%?"
-         :empty-lines 1 :clock-in t :clock-resume t)
-        ("s" "Schedule" entry (file "~/RoamNotes/inbox.org")
-         "* %?\n%^T\n%U" :empty-lines 1)
-        ))
+         "* Meeting: %^{Topic} [%<%Y-%m-%d %a>] :meeting:\n:PROPERTIES:\n:CREATED:  %U\n:ATTENDEES: %^{With}\n:END:\n%?" :empty-lines 1 :clock-in t :clock-resume t)))
 
 (add-hook 'org-capture-mode-hook #'delete-other-windows)
 #+end_src
@@ -616,20 +718,54 @@ The countdown timer defaults to 25 minutes.
 
 ** Babel :HOOK:
 
-Evaluate graphviz, elisp and shell blocks. Only shell still asks for confirmation. Images produced by a block are refreshed right after it ran.
+Evaluate code blocks in org files. Only shell still asks for confirmation.
 
 #+begin_src emacs-lisp
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((dot        . t)
    (emacs-lisp . t)
+   (lilypond   . t)
+   (python     . t)
    (shell      . t)))
 
+(setq org-babel-default-header-args:lilypond
+      '((:results . "file graphics")))
+
 (defun my/org-confirm-babel-evaluate (lang _body)
-  (not (member lang '("dot" "emacs-lisp"))))
+  (not (member lang '("dot" "emacs-lisp" "lilypond" "python"))))
 
 (setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate)
+#+end_src
+
+Images produced by a block are refreshed right after it ran.
+
+#+begin_src emacs-lisp
 (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
+#+end_src
+
+*** Fix for version mismatch :PERSONAL:FIX:
+
+This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable org-mode build.
+
+#+begin_src emacs-lisp
+;; Org's built-in cropping not working. Got full size A4 music sheet.
+;; This sizes the page height to fit the music.
+(setq org-babel-lilypond-paper-settings
+      "#(ly:set-option 'resolution 150)
+\\paper {
+  indent = 0
+  tagline = ##f
+  page-breaking = #ly:one-page-breaking
+  oddHeaderMarkup = ##f  evenHeaderMarkup = ##f  oddFooterMarkup = ##f
+  top-margin = 2\\mm  bottom-margin = 2\\mm
+}
+")
+
+;; LilyPond 2.26 renamed its mode to `lilypond-mode'
+;; Org's src-block and Gentoo's site file still call `LilyPond-mode'.
+(autoload 'lilypond-mode "lilypond-mode" nil t)
+(defalias 'LilyPond-mode #'lilypond-mode)
 #+end_src
 
 ** LaTeX preview :ADVICE:
@@ -655,9 +791,9 @@ Fix for TRAMP: in a remote buffer the preview would run LaTeX on the remote host
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 #+end_src
 
-** Roam :BINDING:MODE:PERSONAL:
+** Roam :BIND:MODE:PERSONAL:
 
-Loaded eagerly as well, for the same reason as Org: =org-roam-protocol= has to be listening.
+=org-roam-protocol= must be loaded before external program calls it at arbitrary times.
 
 #+begin_src emacs-lisp
 (setq org-roam-directory (file-truename "~/RoamNotes")
@@ -681,6 +817,7 @@ A page captured from the browser becomes a reference note, with the selection qu
 Everything lives under =C-c n=.
 
 #+begin_src emacs-lisp
+
 (keymap-global-set "C-c n f" #'org-roam-node-find)
 (keymap-global-set "C-c n c" #'org-roam-capture)
 (keymap-global-set "C-c n l" #'org-roam-buffer-toggle)
@@ -702,6 +839,53 @@ The backlinks buffer opens as a side window on the right and survives =C-x 1=.
                (side . right)
                (window-width . 0.33)
                (window-parameters . ((no-delete-other-windows . t)))))
+#+end_src
+
+** Appointment notifications :HOOK:
+
+=appt= reminds of today's timed agenda entries as desktop notifications. Entries without a time of day are skipped. Clicking a notification opens a new frame with today's agenda.
+
+#+begin_src emacs-lisp
+(require 'notifications)
+
+(defun my/appt-agenda-frame ()
+  "Open a new frame showing today's agenda."
+  (select-frame-set-input-focus (make-frame))
+  (let ((org-agenda-window-setup 'current-window))
+    (org-agenda-list nil nil 'day)))
+
+(defun my/appt-notify (min-to-app _now msg)
+  ;; Appointments due at the same time arrive as lists.
+  (when (listp msg)
+    (setq min-to-app (car min-to-app)
+          msg (string-join msg "\n")))
+  (notifications-notify
+   :title msg
+   :body (if (equal min-to-app "0") "Now" (format "In %s min" min-to-app))
+   :timeout (if (equal min-to-app "0") -1 900000)
+   :actions '("default" "Show agenda")
+   :on-action (lambda (_id _key) (my/appt-agenda-frame))))
+
+(setq appt-display-format 'window
+      appt-disp-window-function #'my/appt-notify
+      appt-message-warning-time 15 ;; send notifications at 15 and 0 min
+      appt-display-interval 15)
+(appt-activate 1)
+#+end_src
+
+The appt list is a snapshot of today's agenda, so rebuild it after init (once =org-agenda-files= is set), whenever an Org file is saved, and just after midnight.
+
+#+begin_src emacs-lisp
+(defun my/org-refresh-appt ()
+  (org-agenda-to-appt t)) ;; rebuild instead of append
+
+(defun my/org-refresh-appt-on-save ()
+  (when (derived-mode-p 'org-mode)
+    (my/org-refresh-appt)))
+
+(add-hook 'after-init-hook #'my/org-refresh-appt)
+(add-hook 'after-save-hook #'my/org-refresh-appt-on-save)
+(run-at-time "00:01" 86400 #'my/org-refresh-appt)
 #+end_src
 
 ** Helpers
@@ -753,14 +937,14 @@ One day at a time, weeks start on Sunday.
         (search category-keep)))
 #+end_src
 
-** Calendar :BINDING:
+** Calendar :BIND:
 
 A month view of the agenda. The command is not in the system autoloads, hence the explicit =autoload=.
 
 #+begin_src emacs-lisp
 (autoload 'calfw-org-open-calendar "calfw-org" nil t)
 (setq calfw-org-overwrite-default-keybinding t)
-(keymap-global-set "C-c m" #'calfw-org-open-calendar)
+(keymap-global-set "C-c M" #'calfw-org-open-calendar)
 #+end_src
 
 Use fixed-pitch font in calendar.
@@ -788,7 +972,7 @@ Use fixed-pitch font in calendar.
    "Major mode for viewing GitHub Flavored Markdown content." t)
 
 (with-eval-after-load 'markdown-mode
-  (define-key markdown-mode-map (kbd "C-c C-e") #'markdown-do))
+  (keymap-set markdown-mode-map "C-c C-e" #'markdown-do))
 
 (setq markdown-command "pandoc"
       markdown-hide-markup t
@@ -872,17 +1056,11 @@ Show the compiled PDF in a separate frame, instead of taking over the source win
                (dedicated . t)))
 #+end_src
 
-* Coding
+* IDE
 
-** Interface :MODE:
+For inline execution in org-mode, see [[*Babel][org-mode babel]] section.
 
-Allow clicking into xref definitions.
-
-#+begin_src emacs-lisp
-(global-xref-mouse-mode 1)
-#+end_src
-
-** Buffers :HOOK:
+** Buffers :HOOK:MODE:
 
 Line numbers, on-the-fly diagnostics, and spell checking restricted to comments and strings. Emacs Lisp files get outline folding on their =;;;= headings.
 
@@ -891,6 +1069,12 @@ Line numbers, on-the-fly diagnostics, and spell checking restricted to comments 
 (add-hook 'prog-mode-hook       #'flymake-mode)
 (add-hook 'prog-mode-hook       #'flyspell-prog-mode)
 (add-hook 'emacs-lisp-mode-hook #'outline-minor-mode)
+#+end_src
+
+Allow clicking into xref definitions.
+
+#+begin_src emacs-lisp
+(global-xref-mouse-mode 1)
 #+end_src
 
 ** Tree-sitter
@@ -928,7 +1112,7 @@ Start Eglot automatically for the languages that have a server installed.
 (add-hook 'go-ts-mode-hook       #'eglot-ensure)
 #+end_src
 
-** Version control :BINDING:HOOK:DEFER:
+** Version control :BIND:HOOK:DEFER:
 
 Magit with word-level highlighting in every hunk.
 
@@ -937,7 +1121,7 @@ Magit with word-level highlighting in every hunk.
 (keymap-global-set "C-x g" #'magit-status)
 #+end_src
 
-=diff-hl= marks uncommitted changes in the fringe, updates them while typing (flydiff), and refreshes after Magit changed the repository.
+=diff-hl= marks uncommitted changes in the fringe, updates them while typing (flydiff), and refreshes after Magit changed the repository. Disable by default when working over TRAMP.
 
 #+begin_src emacs-lisp
 (autoload 'diff-hl-magit-post-refresh "diff-hl" nil t)
@@ -955,6 +1139,8 @@ Magit with word-level highlighting in every hunk.
   (diff-hl-margin-mode 1)
   (diff-hl-flydiff-mode 1)
   (global-diff-hl-show-hunk-mouse-mode 1))
+
+(setq diff-hl-disable-on-remote t)
 #+end_src
 
 ** Remote :DEFER:PERSONAL:
@@ -972,15 +1158,15 @@ TRAMP builds its own PATH from the list in =tramp-remote-path=. The earlier entr
     (add-to-list 'tramp-remote-path d)))
 #+end_src
 
-Ensure remote ~dir-locals.el~ loads.
+Ensure =dir-locals.el= in remote directory also loads.
 
 #+begin_src emacs-lisp
 (setq enable-remote-dir-locals t)
 #+end_src
 
-** Agent :BINDING:
+** Agent :BIND:
 
-Copy a formatted prompt for the region or a defun.
+Copy a formatted prompt for the region or a function.
 
 #+begin_src emacs-lisp
 (defun my/copy-prompt-stub (beg end)
@@ -1006,10 +1192,28 @@ Copy a formatted prompt for the region or a defun.
 (keymap-global-set "C-c C-a" #'my/copy-prompt-stub)
 #+end_src
 
-* Experiments :INACTIVE:
+** Terminal emulator
 
-Not tangled. The =:INACTIVE:= tag on this heading switches off every block under it.
+Invoke terminal in Emacs.
 
 #+begin_src emacs-lisp
-(setq debug-on-error t)
+(defun my/vterm-new ()
+  "Always create a new vterm buffer."
+  (interactive)
+  (vterm t))
+
+(defun my/vterm-new-other-window ()
+  "Always create a new vterm buffer in another window."
+  (interactive)
+  (vterm-other-window t))
+
+(defun my/vterm-new-other-frame ()
+  "Always create a new vterm buffer in a new frame."
+  (interactive)
+  (select-frame-set-input-focus (make-frame))
+  (vterm t))
+
+(keymap-global-set "C-c s" #'my/vterm-new)
+(keymap-global-set "C-x 4 s" #'my/vterm-new-other-window)
+(keymap-global-set "C-x 5 s" #'my/vterm-new-other-frame)
 #+end_src

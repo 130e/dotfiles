@@ -2,6 +2,8 @@ app-admin/keepassxc
 app-emacs/calfw
 app-emacs/org-roam
 
+=media-sound/lilypond-2.26.0 ~amd64
+
 # yt-dlp extras
 net-misc/curl-impersonate
 dev-python/curl-cffi

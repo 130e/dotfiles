@@ -31,7 +31,7 @@ font_family = "Iosevka Aile"
 
 Follow system light/dark mode, automatically triggered by [[*Location and weather][weather]].
 
-Note that Noctalia seems to regenerate the application theme templates when changing those from GUI, including  =~/.config/niri/noctalia.kdl= read by [[file:niri.org::*Assembly][niri]].
+Note that Noctalia seems to regenerate the application theme templates when changing those from GUI, including  =~/.config/niri/noctalia.kdl=.
 
 #+begin_src toml
 [theme]
@@ -47,7 +47,20 @@ mode = "auto"
 #+begin_src toml
 [bar.default]
 center = [ "media", "audio_visualizer" ]
-end = [ "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "clock", "date" ]
+end = [
+    "tray",
+    "notifications",
+    "clipboard",
+    "network",
+    "bluetooth",
+    "volume",
+    "brightness",
+    "battery",
+    "spacer_3",
+    "date",
+    "spacer_2",
+    "clock"
+]
 start = [ "launcher", "workspaces" ]
 #+end_src
 
@@ -67,11 +80,11 @@ label_content = "rate"
 show_label = false
 
 [widget.clock]
-format = "{:%R}"
+format = "{:%I:%M %p}"
 tooltip_format = "{:%Z %z}"
 
 [widget.date]
-format = "{:%x %a}"
+format = "{:%a %b %-d}"
 
 [widget.media]
 hide_when_idle = true
@@ -81,6 +94,14 @@ title_scroll = "on_hover"
 
 [widget.network]
 show_label = false
+
+[widget.spacer_2]
+length = 10
+type = "spacer"
+
+[widget.spacer_3]
+length = 10
+type = "spacer"
 
 [widget.volume]
 mute_color = "secondary"
@@ -115,4 +136,28 @@ unit = "imperial"
 
 [nightlight]
 enabled = true
+#+end_src
+
+* Idle :PERSONAL:
+
+Only screen-off for home desktop PC. Should adapt according to battery powered devices.
+
+#+begin_src toml
+[idle]
+behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
+
+    [idle.behavior.lock]
+    action = "lock"
+    enabled = false
+    timeout = 600.0
+
+    [idle.behavior.lock-and-suspend]
+    action = "lock_and_suspend"
+    enabled = false
+    timeout = 900.0
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    enabled = true
+    timeout = 660.0
 #+end_src

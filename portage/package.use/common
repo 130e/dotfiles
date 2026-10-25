@@ -5,6 +5,7 @@ media-fonts/iosevka iosevka-aile iosevka-etoile iosevka-slab
 net-analyzer/tcpdump suid
 
 media-sound/timidity++ emacs
+media-sound/lilypond emacs
 
 # deps
 sys-devel/gcc jit

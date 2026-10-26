@@ -375,7 +375,7 @@ Lock, Emacs, capture, browser. The capture key opens a dedicated frame, which th
 
 #+begin_src kdl
 Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
-Mod+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
+Mod+Alt+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
 Mod+Alt+C hotkey-overlay-title="Org capture" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(org-capture)"; }
 Mod+Alt+A hotkey-overlay-title="Org calendar" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(calfw-org-open-calendar)";}
 Mod+Alt+W hotkey-overlay-title="Browser" { spawn "firefox"; }
@@ -425,6 +425,8 @@ Mod+F     { focus-column-right; }
 
 Mod+Home { focus-column-first; }
 Mod+End  { focus-column-last; }
+Mod+A { focus-column-first; }
+Mod+E  { focus-column-last; }
 #+end_src
 
 ** Move
@@ -443,6 +445,8 @@ Mod+Ctrl+F     { move-column-right; }
 
 Mod+Ctrl+Home { move-column-to-first; }
 Mod+Ctrl+End  { move-column-to-last; }
+Mod+Ctrl+A { move-column-to-first; }
+Mod+Ctrl+E { move-column-to-last; }
 #+end_src
 
 ** Monitors

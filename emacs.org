@@ -527,7 +527,10 @@ Vertico shows the candidates as a vertical list, Marginalia annotates them.
 
 ** Matching style: Orderless
 
-Orderless matches space-separated terms in any order. File names keep partial completion, so =/u/s/e= still expands to =/usr/share/emacs=.
+Orderless matches space-separated terms in any order. Vertico sorts matches by frequency. For example, to match =find-file= command,
+
+- basic :: =fil fin= works. Space separated and each sub string must be correct.
+- flex :: prefix =~fndfl= to use flex in current search.
 
 #+begin_src emacs-lisp
 (setq completion-styles               '(orderless basic)

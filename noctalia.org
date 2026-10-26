@@ -76,6 +76,9 @@ width = 385
 [widget.battery]
 label_content = "rate"
 
+[widget.bluetooth]
+hide_when_no_connected_device = true
+
 [widget.brightness]
 show_label = false
 

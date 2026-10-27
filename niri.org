@@ -482,9 +482,15 @@ Mod+Page_Down      { focus-workspace-down; }
 Mod+Page_Up        { focus-workspace-up; }
 Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
 Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
-
 Mod+Shift+Page_Down { move-workspace-down; }
 Mod+Shift+Page_Up   { move-workspace-up; }
+
+Mod+V      { focus-workspace-down; }
+Mod+U        { focus-workspace-up; }
+Mod+Ctrl+V { move-column-to-workspace-down; }
+Mod+Ctrl+U   { move-column-to-workspace-up; }
+Mod+Shift+V { move-workspace-down; }
+Mod+Shift+U   { move-workspace-up; }
 #+end_src
 
 By index. Workspaces are dynamic, so this is best effort: an index past the last workspace means the empty one at the bottom.

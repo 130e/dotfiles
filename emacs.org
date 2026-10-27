@@ -578,7 +578,7 @@ Org is loaded eagerly rather than on first use: =org-protocol= has to be listeni
 (require 'org)
 #+end_src
 
-** Keys :BIND:
+** Keybindings :BIND:
 
 #+begin_src emacs-lisp
 (keymap-global-set "C-c a" #'org-agenda)
@@ -619,6 +619,14 @@ Hide the markup and show the result: emphasis markers, drawers, entities, inline
 (setq org-modern-star 'replace)
 (add-hook 'org-mode-hook            #'org-modern-mode)
 (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
+#+end_src
+
+** Media and attachment
+
+Save pasted images as plain files relative to current org file.
+
+#+begin_src emacs-lisp
+(setq org-yank-image-save-method "data/images/")
 #+end_src
 
 ** Todo and logging
@@ -1133,7 +1141,7 @@ Magit with word-level highlighting in every hunk.
 (add-hook 'prog-mode-hook  #'turn-on-diff-hl-mode)
 (add-hook 'text-mode-hook  #'turn-on-diff-hl-mode)
 (add-hook 'conf-mode-hook  #'turn-on-diff-hl-mode)
-(add-hook 'dired-mode-hook #'diff-hl-dired-mode)
+;; (add-hook 'dired-mode-hook #'diff-hl-dired-mode)
 
 (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
 (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
@@ -1176,10 +1184,11 @@ Copy a formatted prompt for the region or a function.
   "Format an agent prompt stub for the region or the defun at point."
   (interactive
    (if (use-region-p)
-       (list (region-beginning) (region-end))
+       (list (region-beginning) (region-end)) ;; selected region
      (let ((b (bounds-of-thing-at-point 'defun)))
        (unless b (user-error "No region or defun at point"))
-       (list (car b) (cdr b)))))
+       (list (car b) (cdr b))) ;; point inside defun
+     ))
   (let* ((root (if-let ((p (project-current))) (project-root p) default-directory))
          (file (file-relative-name (or buffer-file-name (user-error "Buffer has no file")) root))
          (l1 (line-number-at-pos beg))
@@ -1216,7 +1225,8 @@ Invoke terminal in Emacs.
   (select-frame-set-input-focus (make-frame))
   (vterm t))
 
-(keymap-global-set "C-c s" #'my/vterm-new)
+(keymap-global-set "C-c s" #'vterm)
+(keymap-global-set "C-c S" #'my/vterm-new)
 (keymap-global-set "C-x 4 s" #'my/vterm-new-other-window)
 (keymap-global-set "C-x 5 s" #'my/vterm-new-other-frame)
 #+end_src

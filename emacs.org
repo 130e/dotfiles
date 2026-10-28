@@ -755,30 +755,6 @@ Images produced by a block are refreshed right after it ran.
 (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
 #+end_src
 
-*** Fix for version mismatch :PERSONAL:FIX:
-
-This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable org-mode build.
-
-#+begin_src emacs-lisp
-;; Org's built-in cropping not working. Got full size A4 music sheet.
-;; This sizes the page height to fit the music.
-(setq org-babel-lilypond-paper-settings
-      "#(ly:set-option 'resolution 150)
-\\paper {
-  indent = 0
-  tagline = ##f
-  page-breaking = #ly:one-page-breaking
-  oddHeaderMarkup = ##f  evenHeaderMarkup = ##f  oddFooterMarkup = ##f
-  top-margin = 2\\mm  bottom-margin = 2\\mm
-}
-")
-
-;; LilyPond 2.26 renamed its mode to `lilypond-mode'
-;; Org's src-block and Gentoo's site file still call `LilyPond-mode'.
-(autoload 'lilypond-mode "lilypond-mode" nil t)
-(defalias 'LilyPond-mode #'lilypond-mode)
-#+end_src
-
 ** LaTeX preview :ADVICE:
 
 Render fragments as SVG, slightly enlarged, as soon as a file opens (per file: =#+STARTUP: latexpreview=).
@@ -1230,3 +1206,43 @@ Invoke terminal in Emacs.
 (keymap-global-set "C-x 4 s" #'my/vterm-new-other-window)
 (keymap-global-set "C-x 5 s" #'my/vterm-new-other-frame)
 #+end_src
+
+* Fixes :PERSONAL:FIX:
+
+** LilyPond version mismatch in unstable
+
+This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable org-mode build.
+
+#+begin_src emacs-lisp
+;; Org's built-in cropping not working. Got full size A4 music sheet.
+;; This sizes the page height to fit the music.
+(setq org-babel-lilypond-paper-settings
+      "#(ly:set-option 'resolution 150)
+\\paper {
+  indent = 0
+  tagline = ##f
+  page-breaking = #ly:one-page-breaking
+  oddHeaderMarkup = ##f  evenHeaderMarkup = ##f  oddFooterMarkup = ##f
+  top-margin = 2\\mm  bottom-margin = 2\\mm
+}
+")
+
+;; LilyPond 2.26 renamed its mode to `lilypond-mode'
+;; Org's src-block and Gentoo's site file still call `LilyPond-mode'.
+(autoload 'lilypond-mode "lilypond-mode" nil t)
+(defalias 'LilyPond-mode #'lilypond-mode)
+#+end_src
+
+** Exclude pixel-scroll-mode in vterm
+
+The pixel scroll mode hijack the =PageUp= and =PageDown= in vterm. Allow it to pass through here.
+
+#+begin_src emacs-lisp
+(defun my/vterm-unshadow-pixel-scroll ()
+  "Let vterm handle PageUp/PageDown instead of `pixel-scroll-precision-mode'."
+  (push (cons 'pixel-scroll-precision-mode (make-sparse-keymap))
+        minor-mode-overriding-map-alist))
+
+(add-hook 'vterm-mode-hook #'my/vterm-unshadow-pixel-scroll)
+#+end_src
+

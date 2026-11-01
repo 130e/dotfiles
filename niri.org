@@ -217,17 +217,6 @@ debug {
 
 Find a window's =app-id= and =title= with =niri msg windows=. Wiki: [[https://niri-wm.github.io/niri/Configuration:-Window-Rules][Configuration: Window Rules]].
 
-** Workarounds
-
-WezTerm's initial configure bug: let it pick its own width.
-
-#+begin_src kdl
-window-rule {
-    match app-id=r#"^org\.wezfurlong\.wezterm$"#
-    default-column-width {}
-}
-#+end_src
-
 ** Floating windows
 
 Small or transient windows that make no sense as a full-height column.
@@ -254,21 +243,7 @@ window-rule {
 }
 #+end_src
 
-*** Emacs
-
-Work in tandem with [[file:emacs.org][Emacs dotfile]]. Temporary Emacs frames (e.g., for org-capture and calendar) should be floating.
-
-#+begin_src kdl
-window-rule {
-    // match app-id="^emacs(?:-[0-9]+)?$" title=r#"^CAPTURE-(?:.+)\.org$"#
-    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-temp-frame$"
-    open-floating true
-    default-column-width { fixed 830; }
-    default-window-height { fixed 700; }
-}
-#+end_src
-
-*** Others
+*** Other applications
 
 Other miscellaneous.
 
@@ -321,6 +296,30 @@ window-rule {
 }
 #+end_src
 
+** Emacs
+
+Work in tandem with [[file:emacs.org][emacs.org]]. It defines two types of special Emacs frame based on its title.
+
+- Temporary Emacs frames floats, medium size.
+- Popup frames are usually minibuffers, small size.
+
+#+begin_src kdl
+window-rule {
+    // match app-id="^emacs(?:-[0-9]+)?$" title=r#"^CAPTURE-(?:.+)\.org$"#
+    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-temp-frame$"
+    open-floating true
+    default-column-width { fixed 830; }
+    default-window-height { fixed 700; }
+}
+
+window-rule {
+    match app-id="^emacs(?:-[0-9]+)?$" title="^emacs-popup$"
+    open-floating true
+    default-column-width { fixed 700; }
+    default-window-height { fixed 320; }
+}
+#+end_src
+
 ** Disabled
 
 Kept as examples, switched off with =/-=.
@@ -360,26 +359,35 @@ Rounded corners for all windows.
 Mod+Shift+Slash { show-hotkey-overlay; }
 #+end_src
 
-** Programs
+** Noctalia and other applications
 
-Terminal, then the Noctalia panels: launcher, control center, notifications, session menu.
+Noctalia panels and other application shortcuts.
 
 #+begin_src kdl
-Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
 Mod+Space hotkey-overlay-title="Run an Application" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
 Mod+S hotkey-overlay-title="Show Notifications" { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications";}
+Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
 Mod+Shift+E hotkey-overlay-title="Quit Session" { spawn "noctalia" "msg" "panel-toggle" "session";}
+Mod+Alt+F hotkey-overlay-title="Web browser" { spawn "nautilus"; }
 #+end_src
 
-Lock, Emacs, capture, browser. The capture key opens a dedicated frame, which the window rule above floats.
+** Emacs
+
+Since I always run an Emacs daemon, I offload part of the desktop utilities to it.
+
+To delete a popup Emacs frame automatically, configured related /done/ hook in [[file:emacs.org][emacs.org]] and set the frame name when invoking from Niri. It's not always possible to do so, thus, alternatively, just quit window from Niri.
 
 #+begin_src kdl
-Super+Alt+L hotkey-overlay-title="Lock the Screen: loginctl" { spawn "loginctl" "lock-session"; }
+Mod+Return hotkey-overlay-title="Switch to existing Terminal: Emacs vterm" { spawn "emacsclient" "-c" "-e" "(vterm)"; }
+Mod+Alt+Return hotkey-overlay-title="Open a New Terminal: Emacs vterm" { spawn "emacsclient" "-c" "-e" "(vterm t)"; }
+
 Mod+Alt+E hotkey-overlay-title="Emacs" { spawn "emacsclient" "-c"; }
+
 Mod+Alt+C hotkey-overlay-title="Org capture" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(org-capture)"; }
 Mod+Alt+A hotkey-overlay-title="Org calendar" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-temp-frame\"))" "-e" "(calfw-org-open-calendar)";}
-Mod+Alt+W hotkey-overlay-title="Browser" { spawn "firefox"; }
-Mod+Alt+I hotkey-overlay-title="Browser incognito" { spawn "firefox" "--private-window"; }
+
+Mod+Alt+K hotkey-overlay-title="Web search" { spawn "emacsclient" "-c" "-F" "((name . \"emacs-popup\") (minibuffer . only))" "-e" "(my/popup-run #'my/web-search)"; }
+Mod+Alt+P hotkey-overlay-title="Edit primary selection" { spawn-sh r#"emacsclient -c -F '((name . "emacs-temp-frame"))' -e "(my/bridge-primary $(niri msg --json focused-window | jq .id))""#; }
 #+end_src
 
 ** Media keys

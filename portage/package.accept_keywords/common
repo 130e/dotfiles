@@ -4,6 +4,8 @@ app-emacs/org-roam
 
 =media-sound/lilypond-2.26.0 ~amd64
 
+gui-apps/wtype
+
 # yt-dlp extras
 net-misc/curl-impersonate
 dev-python/curl-cffi

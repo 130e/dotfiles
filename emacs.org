@@ -23,7 +23,7 @@ Every =emacs-lisp= block below is written, top to bottom, into a single =init.el
 - =:PERSONAL:= The content might need adapting per machine (paths, fonts).
 - =:OTHER:=    The section is tangled to a different file than =init.el=.
 - =:INACTIVE:= The section is not tangled.
-- =:FIX:= The section implement /temporary/ tweaks due to my machine's build.
+- =:FIX:= The section is hacks mitigating by conflicting package behaviors.
 
 * Package management
 
@@ -58,7 +58,7 @@ I install these packages from Gentoo Emacs overlay. They are loaded by =/etc/ema
 
 * Basic settings
 
-** Startup :PERSONAL:
+** Startup :PERSONAL:INACTIVE:
 
 Homepage. Experimental.
 
@@ -72,8 +72,8 @@ Homepage. Experimental.
                        (get-scratch-buffer-create))
     org))
 
-(setq inhibit-startup-message t
-      initial-buffer-choice   "~/RoamNotes/inbox.org")
+;; (setq inhibit-startup-message t
+;;       initial-buffer-choice   "~/RoamNotes/inbox.org")
 #+end_src
 
 ** Files :HOOK:
@@ -132,7 +132,7 @@ Basic editing stuffs. Spaces instead of tabs, matching parentheses, typing repla
 
 #+begin_src emacs-lisp
 (setq-default indent-tabs-mode nil)
-(setq save-interprogram-paste-before-kill t)
+(setq save-interprogram-paste-before-kill t) ;; read system clipboard
 
 (show-paren-mode       1)
 (electric-pair-mode    1)
@@ -175,17 +175,6 @@ Resize by pixel and do not allow automatic resizing due to font or chrome change
       frame-resize-pixelwise       t
       window-resize-pixelwise      t
       frame-inhibit-implied-resize t)
-#+end_src
-
-*** Delete frame when done
-
-Kill the frame when its title matches. This is useful for one-off GUI popup. See [[*Capture from the browser][Capture from the browser]].
-
-#+begin_src emacs-lisp
-(defun my/del-temp-frame ()
-  "Delete frame if its frame title matches."
-  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
-    (delete-frame)))
 #+end_src
 
 ** Scrolling and mouse :MODE:
@@ -323,8 +312,157 @@ Preview is immediate except for slow sources (debounced), and =<= narrows candid
    consult-bookmark consult-recent-file consult-xref
    consult-source-bookmark consult-source-file-register
    consult-source-recent-file consult-source-project-recent-file
-   :preview-key '(:debounce 0.4 any))
-  (setq consult-narrow-key "<"))
+   :preview-key '(:debounce 0.4 any)))
+(setq consult-narrow-key "<")
+#+end_src
+
+Disable preview for EXWM and TRAMP buffers.
+
+#+begin_src emacs-lisp
+(defun my/consult-remote-buffer-p (buf &rest _)
+  "Return non-nil if BUF is visiting a remote (TRAMP) location."
+  (file-remote-p (buffer-local-value 'default-directory (get-buffer buf))))
+
+(setq consult-preview-excluded-buffers '(or my/consult-remote-buffer-p
+                                            (derived-mode . exwm-mode)))
+#+end_src
+
+* System integration
+
+** Delete frame after function returns
+
+Wraps a function call in this cleanup script to deleted it once it returns.
+
+#+begin_src emacs-lisp
+(defun my/popup-run (fn)
+  "Call FN in the current popup frame, then delete the frame.
+This is only safe when FN is synchronous and its output is not
+meant to be viewed in current frame. Because the frame will be
+deleted immediately as soon as FN returns.
+This also works on C-g and function call error."
+  (unwind-protect (funcall fn)
+    (when (equal (frame-parameter nil 'name) "emacs-popup")
+      (delete-frame))))
+#+end_src
+
+** Delete frame on done hook
+
+A function call can call this on its /done-hook/ to delete the frame. See also [[*Capture from the browser][Capture from the browser]].
+
+#+begin_src emacs-lisp
+(defun my/del-temp-frame ()
+  "Delete frame if its frame title matches."
+  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
+    (delete-frame)))
+#+end_src
+
+** Web search
+
+Define macros shortcuts.
+
+#+begin_src emacs-lisp
+(defvar my/search-engines
+  '(("w"  . "https://en.wikipedia.org/wiki/Special:Search?search=%s")
+    ("gh" . "https://github.com/search?q=%s")
+    ("gp" . "https://packages.gentoo.org/packages/search?q=%s")
+    ("ew" . "https://www.emacswiki.org/emacs/Search?action=index&match=%s")))
+#+end_src
+
+Save local search history to a variable list. It should be auto-recorded by =savehist-additional-variables=.
+
+#+begin_src emacs-lisp
+(defvar my/web-search-history nil)
+#+end_src
+
+Prompt for a URL or a search term.
+
+1. Prompt for input with interactive completion from history.
+2. Check for search engine shortcut prefix like =prefix rest=.
+   If match, search over prefix. Encode rest as url string and send to browser.
+3. Check if input likes a standalone URL, if so, send URL to browser.
+4. Encode the input and feed to browser, using default search engine string.
+
+#+begin_src emacs-lisp
+(defun my/web-search ()
+  (interactive)
+  (let* ((in (string-trim (completing-read "URL: " my/web-search-history
+                                           nil nil nil 'my/web-search-history)))
+         (bang (and (string-match "\\`\\(\\w+\\) \\(.+\\)" in)
+                    (assoc (match-string 1 in) my/search-engines))))
+    (browse-url
+     (cond (bang (format (cdr bang) (url-hexify-string (match-string 2 in))))
+           ((string-match-p "\\`\\(https?://\\|[^ ]+\\.[a-z]\\{2,\\}\\(/\\|\\'\\)\\)" in) in)
+           (t (format "https://duckduckgo.com/?q=%s" (url-hexify-string in)))))))
+#+end_src
+
+** Edit primary selection
+
+A pipeline of system → Emacs → system: the primary selection is pulled into a buffer, edited, then pasted back into the app it came from. Requires =wl-clipboard= and =wtype=.
+
+Niri passes the id of the focused window, because once the Emacs frame pops up the original app is no longer focused. See the =Mod+Alt+P= bind in [[file:niri.org][niri.org]].
+
+#+begin_src emacs-lisp
+(defvar-local my/bridge-origin nil
+  "Niri window alist of the app the bridge text came from.
+This is a buffer-local variable.")
+
+(defun my/bridge-window (id)
+  "Return the niri window alist with ID."
+  (seq-find (lambda (w) (equal (alist-get 'id w) id))
+            (json-parse-string (shell-command-to-string "niri msg --json windows")
+                               :object-type 'alist :array-type 'list)))
+#+end_src
+
+*** Source
+
+Insert the primary selection into a new buffer, then pick the major mode from the app id of the origin window.
+
+#+begin_src emacs-lisp
+(defun my/bridge-primary (id)
+  "Edit the primary selection of niri window ID in a bridge buffer."
+  (let ((origin (my/bridge-window id)))
+    (switch-to-buffer (generate-new-buffer "*bridge*"))
+    (call-process "wl-paste" nil '(t nil) nil "--primary" "--no-newline")
+    (pcase (alist-get 'app_id origin)
+      ("firefox"   (markdown-mode))
+      ("Alacritty" (sh-mode))
+      (_           (text-mode)))
+    ;; Set after the major mode, which kills local variables.
+    (setq my/bridge-origin origin
+          header-line-format "Paste back: C-c C-c, abort: C-c C-k")
+    (my/bridge-mode 1)))
+#+end_src
+
+*** Sink
+
+Copy the buffer to the clipboard, close the frame, focus the origin window and send the paste key.
+
+#+begin_src emacs-lisp
+(defun my/bridge-finish ()
+  "Paste the bridge buffer back into its origin window."
+  (interactive)
+  (let ((origin my/bridge-origin))
+    (call-process-region nil nil "wl-copy")
+    (kill-buffer)
+    (my/del-temp-frame)
+    (call-process "niri" nil nil nil "msg" "action" "focus-window"
+                  "--id" (number-to-string (alist-get 'id origin)))
+    (sleep-for 0.1)
+    (apply #'call-process "wtype" nil nil nil
+           (if (equal (alist-get 'app_id origin) "Alacritty")
+               '("-M" "ctrl" "-M" "shift" "v" "-m" "shift" "-m" "ctrl")
+             '("-M" "ctrl" "v" "-m" "ctrl")))))
+
+(defun my/bridge-abort ()
+  "Discard the bridge buffer."
+  (interactive)
+  (kill-buffer)
+  (my/del-temp-frame))
+
+(define-minor-mode my/bridge-mode
+  "Minor mode for bridge buffers."
+  :keymap `((,(kbd "C-c C-c") . my/bridge-finish)
+            (,(kbd "C-c C-k") . my/bridge-abort)))
 #+end_src
 
 * Appearance
@@ -338,8 +476,8 @@ The configuration must be in order:
 ** Fonts :FACE:PERSONAL:
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default        nil :family "Iosevka"         :height 120)
-(set-face-attribute 'variable-pitch nil :family "Iosevka Etoile"  :height 1.0)
+(set-face-attribute 'default        nil :family "Iosevka"         :height 140)
+(set-face-attribute 'variable-pitch nil :family "Iosevka Aile"    :height 1.0)
 (set-face-attribute 'fixed-pitch    nil :family "Iosevka Term"    :height 1.0)
 #+end_src
 
@@ -384,7 +522,7 @@ Trust every theme without asking.
 #+begin_src emacs-lisp
 ;; (setq modus-themes-mixed-fonts t)
 (require-theme 'modus-themes)
-(modus-themes-load-theme 'modus-operandi)
+(modus-themes-load-theme 'modus-vivendi-tinted)
 #+end_src
 
 *** Other themes :INACTIVE:
@@ -511,11 +649,11 @@ Define explicitly which faces should be fixed-pitch as needed.
   (my/fixed-pitch-faces 'org-modern-label))
 #+end_src
 
-* Completion
+* Minibuffer and Completion
 
 ** Minibuffer style :MODE:
 
-Vertico shows the candidates as a vertical list, Marginalia annotates them.
+Vertico shows the candidates as a vertical list, Marginalia annotates them. Also enable minibuffer popup while filling another minibuffer.
 
 #+begin_src emacs-lisp
 (setq vertico-resize t
@@ -523,6 +661,9 @@ Vertico shows the candidates as a vertical list, Marginalia annotates them.
 (vertico-mode    1)
 (marginalia-mode 1)
 (which-key-mode 1)
+
+(setq enable-recursive-minibuffers t)
+(minibuffer-depth-indicate-mode 1)
 #+end_src
 
 ** Matching style: Orderless
@@ -667,7 +808,7 @@ Everything lands in the inbox and is refiled during review.
 (require 'org-protocol)
 #+end_src
 
-The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame is [[*Delete frame when done][deleted]].
+The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame is [[*Delete frame on done hook][deleted]].
 
 #+begin_src emacs-lisp
 (add-hook 'org-capture-after-finalize-hook #'my/del-temp-frame)
@@ -757,11 +898,11 @@ Images produced by a block are refreshed right after it ran.
 
 ** LaTeX preview :ADVICE:
 
-Render fragments as SVG, slightly enlarged, as soon as a file opens (per file: =#+STARTUP: latexpreview=).
+Render fragments as SVG, slightly enlarged. Latex preview can be shown on demand or on startup (per file: =#+STARTUP: latexpreview=).
 
 #+begin_src emacs-lisp
-(setq org-preview-latex-default-process 'dvisvgm
-      org-startup-with-latex-preview t)
+(setq org-preview-latex-default-process 'dvisvgm)
+;; (setq org-startup-with-latex-preview t)
 (plist-put org-format-latex-options :scale 1.3)
 ;; (setq org-highlight-latex-and-related '(native latex script entities))
 #+end_src
@@ -977,7 +1118,7 @@ Convert a Markdown region (typically something pasted) to Org in place.
    "pandoc -f markdown -t org --wrap=none" t t))
 #+end_src
 
-* LaTeX
+* $\LaTeX$ and PDF
 
 ** AUCTeX :HOOK:DEFER:
 
@@ -995,7 +1136,7 @@ Parse documents on load and save, cross-references through RefTeX, PDF shown wit
 (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)
 #+end_src
 
-Refresh the PDF buffer after every successful compile. AUCTeX defers loading, and nothing pulls in the =auctex= feature itself, so the setup hangs off =tex=, which is where =TeX-after-compilation-finished-functions= actually lives.
+Refresh the PDF buffer after every successful compile. AUCTeX defers loading so it's more reliable to hook Tex mode itself.
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'tex
@@ -1003,35 +1144,10 @@ Refresh the PDF buffer after every successful compile. AUCTeX defers loading, an
             #'TeX-revert-document-buffer))
 #+end_src
 
-* PDF
+** Compiled PDF shown in separate frame
 
-** PDF viewing :HOOK:DEFER:
-
-Any file starting with =%PDF= opens in =pdf-view-mode=, as one continuous scroll instead of page by page.
-
-#+begin_src emacs-lisp
-(autoload 'pdf-view-mode "pdf-view" nil t)
-(add-to-list 'magic-mode-alist '("%PDF" . pdf-view-mode))
-
-(setq pdf-view-continuous t)
-(add-hook 'pdf-view-mode-hook #'pdf-view-roll-minor-mode)
-
-(with-eval-after-load 'pdf-tools
-  (pdf-loader-install))
-#+end_src
-
-SyncTeX backward search (click in the PDF, jump to the source). =pdf-sync-backward-search= hands this to =pop-to-buffer= as its action, and left unset it just splits the PDF's own frame. =reuse-window= with =reusable-frames= hands the jump to whatever frame already shows that source buffer; =pop-up-frame= only kicks in when no frame does.
-
-#+begin_src emacs-lisp
-(setq pdf-sync-backward-display-action
-      '((display-buffer-reuse-window display-buffer-pop-up-frame)
-        (reusable-frames . visible)
-        (inhibit-same-window . t)))
-#+end_src
-
-** PDF in its own frame
-
-Show the compiled PDF in a separate frame, instead of taking over the source window. =reuse-window= with =reusable-frames= picks up the frame from the previous compile, so re-running =C-c C-c= does not pile up frames.
+- Compiled PDF shown in separate frame, instead of taking over the source window.
+- Windows and frames are reused when recompiling.
 
 #+begin_src emacs-lisp
 (add-to-list 'display-buffer-alist
@@ -1041,6 +1157,26 @@ Show the compiled PDF in a separate frame, instead of taking over the source win
                (inhibit-same-window . t)
                (inhibit-switch-frame . t)
                (dedicated . t)))
+#+end_src
+
+** PDF viewing :HOOK:DEFER:
+
+When opening the first PDF, loads =pdf-tools=.
+
+#+begin_src emacs-lisp
+(pdf-loader-install)
+
+(setq pdf-view-continuous t)
+(add-hook 'pdf-view-mode-hook #'pdf-view-roll-minor-mode)
+#+end_src
+
+This allow SyncTeX backward search, clicking lines in the PDF, jump to the TeX source. Reuse the source buffer if it's already opened, else pop a new one.
+
+#+begin_src emacs-lisp
+(setq pdf-sync-backward-display-action
+      '((display-buffer-reuse-window display-buffer-pop-up-frame)
+        (reusable-frames . visible)
+        (inhibit-same-window . t)))
 #+end_src
 
 * IDE
@@ -1130,7 +1266,7 @@ Magit with word-level highlighting in every hunk.
 (setq diff-hl-disable-on-remote t)
 #+end_src
 
-** Remote :DEFER:PERSONAL:
+** TRAMP remote :DEFER:PERSONAL:
 
 TRAMP builds its own PATH from the list in =tramp-remote-path=. The earlier entries are checked first. The list can contain literal string paths and special variables, for example:
 
@@ -1207,6 +1343,21 @@ Invoke terminal in Emacs.
 (keymap-global-set "C-x 5 s" #'my/vterm-new-other-frame)
 #+end_src
 
+Increase scrollback size.
+
+#+begin_src emacs-lisp
+(setq vterm-max-scrollback 2000)
+#+end_src
+
+Enhanced *Local Machine's* shell integration with vterm. Do not set this in remote yet.
+
+#+begin_src bash :tangle no
+GENTOO_EMACS_VTERM_ETC_PATH=/usr/share/emacs/etc/vterm/etc/
+if [[ "$INSIDE_EMACS" = 'vterm' ]] && [[ -d "$GENTOO_EMACS_VTERM_ETC_PATH" ]]; then
+    source "$GENTOO_EMACS_VTERM_ETC_PATH/emacs-vterm-bash.sh"
+fi
+#+end_src
+
 * Fixes :PERSONAL:FIX:
 
 ** LilyPond version mismatch in unstable
@@ -1235,7 +1386,7 @@ This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable or
 
 ** Exclude pixel-scroll-mode in vterm
 
-The pixel scroll mode hijack the =PageUp= and =PageDown= in vterm. Allow it to pass through here.
+The =pixel-scroll-precision-interpolate-page= hijacks the =PageUp= and =PageDown= in vterm. Allow it to pass through here.
 
 #+begin_src emacs-lisp
 (defun my/vterm-unshadow-pixel-scroll ()
@@ -1246,3 +1397,31 @@ The pixel scroll mode hijack the =PageUp= and =PageDown= in vterm. Allow it to p
 (add-hook 'vterm-mode-hook #'my/vterm-unshadow-pixel-scroll)
 #+end_src
 
+** (WIP) vterm and TRAMP integration
+
+Setting up vterm + TRAMP with directory tracking requires careful setup, so the extra vterm prompts don't leak into TRAMP and hangs it.
+
+In remote vterm, use default login shell for all except for docker.
+
+#+begin_src emacs-lisp
+(setq vterm-tramp-shells '((t login-shell) ("docker" "/bin/sh")))
+#+end_src
+
+** vterm and consult-yank-pop
+
+vterm major mode remaps the vanilla =yank-pop=, which we never called in consult. This explicitly overrides =M-y consult-yank-pop=.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'vterm
+  (keymap-set vterm-mode-map "M-y" #'vterm-yank-pop))
+#+end_src
+
+** Embark keybinds with flyspell :INACTIVE:
+
+flyspell hard-coded its keybinds that I reserved for embark. Unset if needed.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'flyspell
+  (keymap-unset flyspell-mode-map "C-." t)
+  (keymap-unset flyspell-mode-map "C-;" t))
+#+end_src

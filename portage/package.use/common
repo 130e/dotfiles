@@ -1,13 +1,25 @@
-app-editors/emacs jit tree-sitter gui -X gtk dynamic-loading sqlite harfbuzz imagemagick
+dev-lang/python jit pgo tk
+sys-devel/gcc jit pgo
+
+app-editors/emacs jit tree-sitter gui -X gtk dynamic-loading sqlite harfbuzz imagemagick libxml2
+
 dev-util/android-tools udev
+
 media-fonts/fonts-meta emoji cjk
-media-fonts/iosevka iosevka-aile iosevka-etoile iosevka-slab
+media-fonts/iosevka iosevka-aile iosevka-etoile
+
 net-analyzer/tcpdump suid
 
 media-sound/timidity++ emacs
 media-sound/lilypond emacs
 
+# Libvirt
+app-emulation/qemu fuse numa spice usbredir
+app-emulation/libvirt bash-completion fuse numa pcap policykit
 # deps
-sys-devel/gcc jit
+net-dns/dnsmasq script
+net-libs/gnutls pkcs11 tools
+net-misc/spice-gtk usbredir
+
 media-libs/gd fontconfig
 sys-apps/util-linux caps

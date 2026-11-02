@@ -27,26 +27,58 @@ Every =emacs-lisp= block below is written, top to bottom, into a single =init.el
 
 * Package management
 
-** Gentoo =app-emacs/*=
+Use [[https://github.com/radian-software/straight.el][straight.el]] to manage packages and [[https://github.com/d12frosted/homebrew-emacs-plus][emacs-plus]] for Mac OS.
 
-I install these packages from Gentoo Emacs overlay. They are loaded by =/etc/emacs/site-start.el= and then =/usr/share/emacs/site-lisp/site-gentoo.el=.
+** Disable package.el :OTHER:
 
-| Package       | Used in         | Purpose                               |
-|---------------+-----------------+---------------------------------------|
-| vertico       | [[Minibuffer]]      | Vertical minibuffer completion        |
-| consult       | [[Consult]]         | Search and navigation commands        |
-| marginalia    | [[Minibuffer]]      | Annotations for completion candidates |
-| orderless     | [[Matching style]]  | Match space-separated terms           |
-| which-key     | [[Key hints]]       | Display available keybindings         |
-| company       | [[In-buffer]]       | Completion popup while typing         |
-| org-modern    | [[Looks]]           | Prettier Org buffers and agenda       |
-| org-roam      | [[Roam]]            | Linked notes with backlinks           |
-| calfw         | [[Calendar]]        | Month calendar fed by the agenda      |
-| markdown-mode | [[Markdown]]        | Markdown                              |
-| auctex        | [[AUCTeX]]          | LaTeX                                 |
-| pdf-tools     | [[PDF viewing]]     | PDF viewer with SyncTeX               |
-| magit         | [[Version control]] | Git interface                         |
-| diff-hl       | [[Version control]] | Visualize diff in the fringe          |
+Snippet from the [[https://github.com/radian-software/straight.el#getting-started][straight.el README]].
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el :mkdirp yes
+;;; early-init.el --- generated from emacs.org, do not edit -*- lexical-binding: t -*-
+(setq package-enable-at-startup nil)
+#+end_src
+
+** Bootstrap straight.el
+
+Snippet from the [[https://github.com/radian-software/straight.el#getting-started][straight.el README]].
+
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+** Packages
+
+Use the Org bundled with Emacs. Otherwise =org-roam= and =org-modern= would pull Org from source as a dependency and mix two Org versions.
+
+#+begin_src emacs-lisp
+(straight-use-package '(org :type built-in))
+#+end_src
+
+Use the default straight repo for now.
+
+#+begin_src emacs-lisp
+(dolist (pkg '(vertico marginalia orderless company
+                       consult embark embark-consult
+                       org-modern org-roam calfw calfw-org
+                       markdown-mode
+                       auctex pdf-tools
+                       magit diff-hl))
+  (straight-use-package pkg))
+#+end_src
 
 ** External programs
 
@@ -54,27 +86,10 @@ I install these packages from Gentoo Emacs overlay. They are loaded by =/etc/ema
 - =dvisvgm= :: Org LaTeX preview in SVG.
 - =dot= :: Compile dot figures.
 - lilypond :: music sheets.
+- =poppler=, =autoconf=, =automake=, =pkg-config= :: build =epdfinfo= for =pdf-tools= (=brew install=).
 - plus the language servers used by [[Language servers]].
 
 * Basic settings
-
-** Startup :PERSONAL:INACTIVE:
-
-Homepage. Experimental.
-
-#+begin_src emacs-lisp
-(defun my/initial-buffer ()
-  "Show org-file and a scratch elisp buffer by default."
-  (let ((org (find-file-noselect "~/RoamNotes/inbox.org")))
-    (delete-other-windows)
-    (switch-to-buffer org)
-    (set-window-buffer (split-window-below -12)
-                       (get-scratch-buffer-create))
-    org))
-
-;; (setq inhibit-startup-message t
-;;       initial-buffer-choice   "~/RoamNotes/inbox.org")
-#+end_src
 
 ** Files :HOOK:
 
@@ -159,14 +174,7 @@ Only show trailing whitespace in certain modes.
 (add-hook 'org-mode-hook  #'my/set-trailing-whitespace)
 #+end_src
 
-** Custom keybindings :BIND:
-
-#+begin_src emacs-lisp
-(keymap-global-set "C-z"   #'undo)
-(keymap-global-set "C-S-z" #'undo-redo)
-#+end_src
-
-** Windows and frames
+** Windows and frames :INACTIVE:
 
 Resize by pixel and do not allow automatic resizing due to font or chrome changes.
 
@@ -206,8 +214,7 @@ Help windows take focus (so =q= closes them straight away) and are reused.
       find-library-include-other-files         nil
       list-matching-lines-jump-to-current-line nil
       imenu-auto-rescan                        t
-      shell-command-prompt-show-cwd            t
-      browse-url-browser-function              'browse-url-firefox)
+      shell-command-prompt-show-cwd            t)
 #+end_src
 
 ** Dired
@@ -327,144 +334,6 @@ Disable preview for EXWM and TRAMP buffers.
                                             (derived-mode . exwm-mode)))
 #+end_src
 
-* System integration
-
-** Delete frame after function returns
-
-Wraps a function call in this cleanup script to deleted it once it returns.
-
-#+begin_src emacs-lisp
-(defun my/popup-run (fn)
-  "Call FN in the current popup frame, then delete the frame.
-This is only safe when FN is synchronous and its output is not
-meant to be viewed in current frame. Because the frame will be
-deleted immediately as soon as FN returns.
-This also works on C-g and function call error."
-  (unwind-protect (funcall fn)
-    (when (equal (frame-parameter nil 'name) "emacs-popup")
-      (delete-frame))))
-#+end_src
-
-** Delete frame on done hook
-
-A function call can call this on its /done-hook/ to delete the frame. See also [[*Capture from the browser][Capture from the browser]].
-
-#+begin_src emacs-lisp
-(defun my/del-temp-frame ()
-  "Delete frame if its frame title matches."
-  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
-    (delete-frame)))
-#+end_src
-
-** Web search
-
-Define macros shortcuts.
-
-#+begin_src emacs-lisp
-(defvar my/search-engines
-  '(("w"  . "https://en.wikipedia.org/wiki/Special:Search?search=%s")
-    ("gh" . "https://github.com/search?q=%s")
-    ("gp" . "https://packages.gentoo.org/packages/search?q=%s")
-    ("ew" . "https://www.emacswiki.org/emacs/Search?action=index&match=%s")))
-#+end_src
-
-Save local search history to a variable list. It should be auto-recorded by =savehist-additional-variables=.
-
-#+begin_src emacs-lisp
-(defvar my/web-search-history nil)
-#+end_src
-
-Prompt for a URL or a search term.
-
-1. Prompt for input with interactive completion from history.
-2. Check for search engine shortcut prefix like =prefix rest=.
-   If match, search over prefix. Encode rest as url string and send to browser.
-3. Check if input likes a standalone URL, if so, send URL to browser.
-4. Encode the input and feed to browser, using default search engine string.
-
-#+begin_src emacs-lisp
-(defun my/web-search ()
-  (interactive)
-  (let* ((in (string-trim (completing-read "URL: " my/web-search-history
-                                           nil nil nil 'my/web-search-history)))
-         (bang (and (string-match "\\`\\(\\w+\\) \\(.+\\)" in)
-                    (assoc (match-string 1 in) my/search-engines))))
-    (browse-url
-     (cond (bang (format (cdr bang) (url-hexify-string (match-string 2 in))))
-           ((string-match-p "\\`\\(https?://\\|[^ ]+\\.[a-z]\\{2,\\}\\(/\\|\\'\\)\\)" in) in)
-           (t (format "https://duckduckgo.com/?q=%s" (url-hexify-string in)))))))
-#+end_src
-
-** Edit primary selection
-
-A pipeline of system → Emacs → system: the primary selection is pulled into a buffer, edited, then pasted back into the app it came from. Requires =wl-clipboard= and =wtype=.
-
-Niri passes the id of the focused window, because once the Emacs frame pops up the original app is no longer focused. See the =Mod+Alt+P= bind in [[file:niri.org][niri.org]].
-
-#+begin_src emacs-lisp
-(defvar-local my/bridge-origin nil
-  "Niri window alist of the app the bridge text came from.
-This is a buffer-local variable.")
-
-(defun my/bridge-window (id)
-  "Return the niri window alist with ID."
-  (seq-find (lambda (w) (equal (alist-get 'id w) id))
-            (json-parse-string (shell-command-to-string "niri msg --json windows")
-                               :object-type 'alist :array-type 'list)))
-#+end_src
-
-*** Source
-
-Insert the primary selection into a new buffer, then pick the major mode from the app id of the origin window.
-
-#+begin_src emacs-lisp
-(defun my/bridge-primary (id)
-  "Edit the primary selection of niri window ID in a bridge buffer."
-  (let ((origin (my/bridge-window id)))
-    (switch-to-buffer (generate-new-buffer "*bridge*"))
-    (call-process "wl-paste" nil '(t nil) nil "--primary" "--no-newline")
-    (pcase (alist-get 'app_id origin)
-      ("firefox"   (markdown-mode))
-      ("Alacritty" (sh-mode))
-      (_           (text-mode)))
-    ;; Set after the major mode, which kills local variables.
-    (setq my/bridge-origin origin
-          header-line-format "Paste back: C-c C-c, abort: C-c C-k")
-    (my/bridge-mode 1)))
-#+end_src
-
-*** Sink
-
-Copy the buffer to the clipboard, close the frame, focus the origin window and send the paste key.
-
-#+begin_src emacs-lisp
-(defun my/bridge-finish ()
-  "Paste the bridge buffer back into its origin window."
-  (interactive)
-  (let ((origin my/bridge-origin))
-    (call-process-region nil nil "wl-copy")
-    (kill-buffer)
-    (my/del-temp-frame)
-    (call-process "niri" nil nil nil "msg" "action" "focus-window"
-                  "--id" (number-to-string (alist-get 'id origin)))
-    (sleep-for 0.1)
-    (apply #'call-process "wtype" nil nil nil
-           (if (equal (alist-get 'app_id origin) "Alacritty")
-               '("-M" "ctrl" "-M" "shift" "v" "-m" "shift" "-m" "ctrl")
-             '("-M" "ctrl" "v" "-m" "ctrl")))))
-
-(defun my/bridge-abort ()
-  "Discard the bridge buffer."
-  (interactive)
-  (kill-buffer)
-  (my/del-temp-frame))
-
-(define-minor-mode my/bridge-mode
-  "Minor mode for bridge buffers."
-  :keymap `((,(kbd "C-c C-c") . my/bridge-finish)
-            (,(kbd "C-c C-k") . my/bridge-abort)))
-#+end_src
-
 * Appearance
 
 The configuration must be in order:
@@ -473,7 +342,7 @@ The configuration must be in order:
 - theme.
 - face fine-tuning per mode.
 
-** Fonts :FACE:PERSONAL:
+** Fonts :FACE:PERSONAL:INACTIVE:
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default        nil :family "Iosevka"         :height 140)
@@ -481,141 +350,37 @@ The configuration must be in order:
 (set-face-attribute 'fixed-pitch    nil :family "Iosevka Term"    :height 1.0)
 #+end_src
 
-*** Font-locks
+** Frame UI :MODE:
 
 #+begin_src emacs-lisp
-(setq diff-font-lock-syntax nil)
-#+end_src
-
-** Chrome :MODE:
-
-No menu bar, tool bar or scroll bar, and a little breathing room on both sides.
-
-#+begin_src emacs-lisp
-(menu-bar-mode   0)
-(tool-bar-mode   0)
+(menu-bar-mode   1)
+(tool-bar-mode   1)
 (scroll-bar-mode 0)
 (set-fringe-mode 10)
 #+end_src
 
-** Tab bar :INACTIVE:
-
-Always show tab bar and allow going back tab's history.
-
-#+begin_src emacs-lisp
-(setopt tab-bar-show 0)
-(setopt tab-bar-history-mode t)
-#+end_src
-
 ** Theme :PERSONAL:
 
-Theming in Emacs is quite complicated. Usually a theme only set defaults for common modes. So [[*Mixed pitch][per mode-face tuning]] might be needed.
-
-Trust every theme without asking.
+Theming in Emacs is quite complicated. Usually a theme only set defaults for common modes. Do [[*Mixed pitch][per mode-face tuning]] if necessary.
 
 #+begin_src emacs-lisp
 (setq custom-safe-themes t)
-#+end_src
-
-*** Modus variants
-
-#+begin_src emacs-lisp
-;; (setq modus-themes-mixed-fonts t)
 (require-theme 'modus-themes)
-(modus-themes-load-theme 'modus-vivendi-tinted)
+(modus-themes-load-theme 'modus-operandi)
+
+(setq modus-themes-headings
+      '((1 . (1.4))
+        (2 . (1.25))
+        (3 . (1.15))
+        (t . (1.1))))
 #+end_src
 
-*** Other themes :INACTIVE:
-
-Theme packages such as =kaolin-themes=.
-
-#+begin_src emacs-lisp
-(require 'kaolin-themes)
-(load-theme 'kaolin-mono-light t)
-#+end_src
-
-*** Theme by desktop shell :INACTIVE:
-
-The desktop shell can also generate a theme matching the wallpaper.
-
-#+begin_src emacs-lisp
-(let ((desktop-theme-dir (expand-file-name "~/.emacs.d/themes/")))
-  (add-to-list 'custom-theme-load-path desktop-theme-dir)
-  (load-theme 'noctalia t))
-#+end_src
-
-** Thin type :FACE:INACTIVE:
-
-A fine prose reading experience, inspired by Nano-emacs. Though I found it uncomfortable at times. Make fonts one step thinner.
-
-#+begin_src emacs-lisp
-(set-face-attribute 'default nil :weight 'light)
-(set-face-attribute 'bold    nil :weight 'regular)
-#+end_src
-
-** Borders, mode line, and status line :FACE:HOOK:INACTIVE:
-
-Borders, dividers and fringes melt into the background. The mode line is collapsed to a thin rule and the status moves up into the header line. The colours are read from the current theme, so the function runs again whenever a theme is enabled.
-
-#+begin_src emacs-lisp
-(defun my/apply-chrome (&rest _)
-  (let ((bg     (face-background 'default))
-        (subtle (face-background 'mode-line-inactive nil t))
-        (rule   (face-foreground 'shadow nil t)))
-    (dolist (f '(internal-border window-divider fringe
-                 window-divider-first-pixel window-divider-last-pixel))
-      (set-face-attribute f nil :background bg :foreground bg))
-    ;; Mode line collapsed to a thin rule
-    (dolist (f '(mode-line mode-line-inactive))
-      (set-face-attribute f nil :height 0.1 :box nil :overline nil
-                          :foreground bg :background bg :underline rule))
-    ;; Status bar lives in the header line instead
-    (set-face-attribute 'header-line nil :background subtle :box nil
-                        :underline nil :inherit nil)))
-
-(my/apply-chrome)
-(add-hook 'enable-theme-functions #'my/apply-chrome)
-#+end_src
-
-The header line shows the buffer name, the major mode, and the position at the right edge.
-
-#+begin_src emacs-lisp
-(setq x-underline-at-descent-line t)
-(setq-default mode-line-format ""
-              header-line-format
-              '(" " (:propertize "%b" face bold) "  (" mode-name ")"
-                (:eval (propertize " " 'display '(space :align-to (- right 8))))
-                "%l:%c"))
-#+end_src
-
-** Headings :FACE:DEFER:
-
-Headings keep the default colour and are only one step heavier. In Org they also grow with their level.
-
-#+begin_src emacs-lisp
-(defface my-strong '((t :weight medium))
-  "Structural text: default colour, one step heavier.")
-
-(with-eval-after-load 'outline
-  (dolist (n (number-sequence 1 8))
-    (set-face-attribute (intern (format "outline-%d" n)) nil
-                        :inherit 'my-strong :foreground 'unspecified)))
-
-(with-eval-after-load 'markdown-mode
-  (set-face-attribute 'markdown-header-face nil
-                      :inherit 'my-strong :foreground 'unspecified :weight 'unspecified))
-
-(with-eval-after-load 'org
-  (cl-loop for (face . height) in '((org-level-1 . 1.4) (org-level-2 . 1.25)
-                                    (org-level-3 . 1.15) (org-level-4 . 1.1))
-           do (set-face-attribute face nil :height height)))
-#+end_src
-
-** Mixed pitch :FACE:HOOK:DEFER:
+** Mixed pitch :FACE:HOOK:DEFER:INACTIVE:
 
 Prose buffers use the proportional font. Otherwise uses default (not necessarily monospace).
 
 #+begin_src emacs-lisp
+(setq modus-themes-mixed-fonts t) ;; if using modus
 (add-hook 'org-mode-hook      #'variable-pitch-mode)
 (add-hook 'markdown-mode-hook #'variable-pitch-mode)
 #+end_src
@@ -800,44 +565,12 @@ Everything lands in the inbox and is refiled during review.
 (add-hook 'org-capture-mode-hook #'delete-other-windows)
 #+end_src
 
-** Capture from the browser :HOOK:
-
-=org-protocol= lets the browser hand a page (and the selected text) to =org-capture= through an =org-protocol://= URL.
-
-#+begin_src emacs-lisp
-(require 'org-protocol)
-#+end_src
-
-The URL handler opens a new frame named =emacs-temp-frame=. Once the capture is finalized that frame is [[*Delete frame on done hook][deleted]].
-
-#+begin_src emacs-lisp
-(add-hook 'org-capture-after-finalize-hook #'my/del-temp-frame)
-#+end_src
-
-*** Desktop entry :OTHER:
-
-This is the other half: the desktop entry that registers =emacsclient= as the handler for =org-protocol://= and names the frame.
-
-#+begin_src conf-desktop :tangle ~/.local/share/applications/emacsclient-org-protocol.desktop :mkdirp yes
-[Desktop Entry]
-Type=Application
-Name=Emacsclient (org-protocol)
-Comment=Custom org-protocol handler (gentoo bug 950674, upstream bug 74467)
-NoDisplay=true
-Categories=Other;
-Keywords=org-protocol;
-Exec=/usr/bin/emacsclient -c -F "((name . \\"emacs-temp-frame\\"))" %u
-Terminal=false
-StartupWMClass=Emacs
-MimeType=x-scheme-handler/org-protocol;
-#+end_src
-
 ** Refile and archive :PERSONAL:
 
 Refile completes on outline paths in one step, not on timestamped file names.
 
 #+begin_src emacs-lisp
-(setq org-refile-targets '((org-agenda-files :maxlevel . 3))
+(setq org-refile-targets '((org-agenda-files :maxlevel . 2))
       org-refile-use-outline-path 'file
       org-outline-path-complete-in-steps nil
       org-refile-allow-creating-parent-nodes 'confirm)
@@ -849,7 +582,7 @@ Archived entries go to a datetree, filed by their =CLOSED= date. This can be ove
 (setq org-archive-location "~/RoamNotes/archive.org::datetree/")
 #+end_src
 
-** [[info:org#Clocking Work Time][Clocking Work Time]]
+** Clocking Work Time
 
 #+begin_src emacs-lisp
 (setq org-clock-persist 'history
@@ -890,7 +623,7 @@ Evaluate code blocks in org files. Only shell still asks for confirmation.
 (setq org-confirm-babel-evaluate #'my/org-confirm-babel-evaluate)
 #+end_src
 
-Images produced by a block are refreshed right after it ran.
+After execution, refresh images produced by a block.
 
 #+begin_src emacs-lisp
 (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
@@ -919,7 +652,7 @@ Fix for TRAMP: in a remote buffer the preview would run LaTeX on the remote host
 (advice-add 'org-create-formula-image :around #'my/org-preview-latex-locally)
 #+end_src
 
-** Roam :BIND:MODE:PERSONAL:
+** Org-roam :BIND:MODE:PERSONAL:
 
 =org-roam-protocol= must be loaded before external program calls it at arbitrary times.
 
@@ -942,7 +675,20 @@ A page captured from the browser becomes a reference note, with the selection qu
          :unnarrowed t)))
 #+end_src
 
-Everything lives under =C-c n=.
+The backlinks buffer opens as a side window on the right and keep visible.
+
+#+begin_src emacs-lisp
+(add-to-list 'display-buffer-alist
+             '("\\*org-roam\\*"
+               (display-buffer-in-side-window)
+               (side . right)
+               (window-width . 0.33)
+               (window-parameters . ((no-delete-other-windows . t)))))
+#+end_src
+
+*** Keybindings
+
+All roam keybindings grow from =C-c n=.
 
 #+begin_src emacs-lisp
 
@@ -954,49 +700,16 @@ Everything lives under =C-c n=.
 (keymap-global-set "C-c n i" #'org-roam-node-insert)
 (keymap-global-set "C-c n r" #'org-roam-refile)
 (keymap-global-set "C-c n e" #'org-roam-extract-subtree)
-(keymap-global-set "C-c n j" #'org-roam-dailies-capture-today)
-(keymap-global-set "C-c n J" #'org-roam-dailies-goto-today)
 #+end_src
 
-The backlinks buffer opens as a side window on the right and survives =C-x 1=.
+** Appointment notifications :HOOK:INACTIVE:
 
-#+begin_src emacs-lisp
-(add-to-list 'display-buffer-alist
-             '("\\*org-roam\\*"
-               (display-buffer-in-side-window)
-               (side . right)
-               (window-width . 0.33)
-               (window-parameters . ((no-delete-other-windows . t)))))
-#+end_src
-
-** Appointment notifications :HOOK:
-
-=appt= reminds of today's timed agenda entries as desktop notifications. Entries without a time of day are skipped. Clicking a notification opens a new frame with today's agenda.
+=appt= reminds of today's *timed* agenda entries.
 
 #+begin_src emacs-lisp
 (require 'notifications)
 
-(defun my/appt-agenda-frame ()
-  "Open a new frame showing today's agenda."
-  (select-frame-set-input-focus (make-frame))
-  (let ((org-agenda-window-setup 'current-window))
-    (org-agenda-list nil nil 'day)))
-
-(defun my/appt-notify (min-to-app _now msg)
-  ;; Appointments due at the same time arrive as lists.
-  (when (listp msg)
-    (setq min-to-app (car min-to-app)
-          msg (string-join msg "\n")))
-  (notifications-notify
-   :title msg
-   :body (if (equal min-to-app "0") "Now" (format "In %s min" min-to-app))
-   :timeout (if (equal min-to-app "0") -1 900000)
-   :actions '("default" "Show agenda")
-   :on-action (lambda (_id _key) (my/appt-agenda-frame))))
-
-(setq appt-display-format 'window
-      appt-disp-window-function #'my/appt-notify
-      appt-message-warning-time 15 ;; send notifications at 15 and 0 min
+(setq appt-message-warning-time 15
       appt-display-interval 15)
 (appt-activate 1)
 #+end_src
@@ -1013,6 +726,7 @@ The appt list is a snapshot of today's agenda, so rebuild it after init (once =o
 
 (add-hook 'after-init-hook #'my/org-refresh-appt)
 (add-hook 'after-save-hook #'my/org-refresh-appt-on-save)
+
 (run-at-time "00:01" 86400 #'my/org-refresh-appt)
 #+end_src
 
@@ -1118,22 +832,30 @@ Convert a Markdown region (typically something pasted) to Org in place.
    "pandoc -f markdown -t org --wrap=none" t t))
 #+end_src
 
-* $\LaTeX$ and PDF
+* Latex
 
 ** AUCTeX :HOOK:DEFER:
 
-Parse documents on load and save, cross-references through RefTeX, PDF shown with PDF Tools, and SyncTeX in both directions.
+- Parse documents on load and save.
+- Cross-references through RefTeX.
 
 #+begin_src emacs-lisp
 (setq TeX-auto-save t
       TeX-parse-self t
-      TeX-view-program-selection '((output-pdf "PDF Tools"))
       TeX-source-correlate-start-server t
       reftex-plug-into-AUCTeX t)
 
 (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
 (add-hook 'LaTeX-mode-hook #'TeX-source-correlate-mode)
 (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)
+#+end_src
+
+** Compiled PDF shown in separate frame :INACTIVE:
+
+Show compiled PDF using Emacs =pdf-tools=. Alternatively, use system built-in =open= command to view PDF.
+
+#+begin_src emacs-lisp
+(setq TeX-view-program-selection '((output-pdf "PDF Tools")))
 #+end_src
 
 Refresh the PDF buffer after every successful compile. AUCTeX defers loading so it's more reliable to hook Tex mode itself.
@@ -1144,13 +866,14 @@ Refresh the PDF buffer after every successful compile. AUCTeX defers loading so 
             #'TeX-revert-document-buffer))
 #+end_src
 
-** Compiled PDF shown in separate frame
+QoL tweaks.
 
 - Compiled PDF shown in separate frame, instead of taking over the source window.
 - Windows and frames are reused when recompiling.
 
 #+begin_src emacs-lisp
 (add-to-list 'display-buffer-alist
+             ;; (CONDITION . (FUNCTIONS . ALIST))
              '((derived-mode . pdf-view-mode)
                (display-buffer-reuse-window display-buffer-pop-up-frame)
                (reusable-frames . visible)
@@ -1159,9 +882,13 @@ Refresh the PDF buffer after every successful compile. AUCTeX defers loading so 
                (dedicated . t)))
 #+end_src
 
-** PDF viewing :HOOK:DEFER:
+* PDF
 
-When opening the first PDF, loads =pdf-tools=.
+Note that this section only impacts PDF viewing in Emacs, =pdf-view-mode=.
+
+** =pdf-tools= :HOOK:DEFER:
+
+Eager loads =pdf-tools= and compile required =epdfinfo= server (/homebrew supported/).
 
 #+begin_src emacs-lisp
 (pdf-loader-install)
@@ -1316,53 +1043,155 @@ Copy a formatted prompt for the region or a function.
 (keymap-global-set "C-c C-a" #'my/copy-prompt-stub)
 #+end_src
 
-** Terminal emulator
+* Mac OS integration
 
-Invoke terminal in Emacs.
+** Keybindings
 
 #+begin_src emacs-lisp
-(defun my/vterm-new ()
-  "Always create a new vterm buffer."
-  (interactive)
-  (vterm t))
+(keymap-global-set "s-q"   #'delete-frame)
 
-(defun my/vterm-new-other-window ()
-  "Always create a new vterm buffer in another window."
+(defun my/kill-visual-line-backward ()
   (interactive)
-  (vterm-other-window t))
+  (kill-visual-line 0))
 
-(defun my/vterm-new-other-frame ()
-  "Always create a new vterm buffer in a new frame."
-  (interactive)
+(keymap-global-set "s-<backspace>" #'my/kill-visual-line-backward)
+#+end_src
+
+** System appearance change (light/dark)
+
+#+begin_src emacs-lisp
+(defun my/apply-theme (appearance)
+  "Load theme, taking current system APPEARANCE into consideration."
+  (mapc #'disable-theme custom-enabled-themes)
+  (pcase appearance
+    ('light (modus-themes-load-theme 'modus-operandi))
+    ('dark (modus-themes-load-theme 'modus-vivendi-tinted))))
+
+(add-hook 'ns-system-appearance-change-functions #'my/apply-theme)
+#+end_src
+
+** Appointment notification
+
+#+begin_src emacs-lisp
+(defun my/appt-notify (min-to-app _now msg)
+  ;; Appointments due at the same time arrive as lists.
+  (when (listp msg)
+    (setq min-to-app (car min-to-app)
+          msg (string-join msg "\n")))
+  (do-applescript
+   (format "display notification %S with title %S sound name %S"
+           (if (equal min-to-app "0") "Now" (format "In %s min" min-to-app))
+           msg
+           "Glass")))
+
+(setq appt-display-format 'window
+      appt-disp-window-function #'my/appt-notify)
+#+end_src
+
+* Linux integration :INACTIVE:
+
+** Appointment notification
+
+Agenda reminder as desktop notification using D-Bus. Works with Mako.
+
+#+begin_src emacs-lisp
+(defun my/appt-agenda-frame ()
+  "Open a new frame showing today's agenda."
   (select-frame-set-input-focus (make-frame))
-  (vterm t))
+  (let ((org-agenda-window-setup 'current-window))
+    (org-agenda-list nil nil 'day)))
 
-(keymap-global-set "C-c s" #'vterm)
-(keymap-global-set "C-c S" #'my/vterm-new)
-(keymap-global-set "C-x 4 s" #'my/vterm-new-other-window)
-(keymap-global-set "C-x 5 s" #'my/vterm-new-other-frame)
+(defun my/appt-notify (min-to-app _now msg)
+  ;; Appointments due at the same time arrive as lists.
+  (when (listp msg)
+    (setq min-to-app (car min-to-app)
+          msg (string-join msg "\n")))
+  (notifications-notify
+   :title msg
+   :body (if (equal min-to-app "0") "Now" (format "In %s min" min-to-app))
+   :timeout (if (equal min-to-app "0") -1 900000)
+   :actions '("default" "Show agenda")
+   :on-action (lambda (_id _key) (my/appt-agenda-frame))))
+
+(setq appt-display-format 'window
+      appt-disp-window-function #'my/appt-notify)
 #+end_src
 
-Increase scrollback size.
+** Delete frame after function returns
+
+Wraps a function call in this cleanup script to deleted it once it returns.
 
 #+begin_src emacs-lisp
-(setq vterm-max-scrollback 2000)
+(defun my/popup-run (fn)
+  "Call FN in the current popup frame, then delete the frame.
+This is only safe when FN is synchronous and its output is not
+meant to be viewed in current frame. Because the frame will be
+deleted immediately as soon as FN returns.
+This also works on C-g and function call error."
+  (unwind-protect (funcall fn)
+    (when (equal (frame-parameter nil 'name) "emacs-popup")
+      (delete-frame))))
 #+end_src
 
-Enhanced *Local Machine's* shell integration with vterm. Do not set this in remote yet.
+** Delete frame on done hook
 
-#+begin_src bash :tangle no
-GENTOO_EMACS_VTERM_ETC_PATH=/usr/share/emacs/etc/vterm/etc/
-if [[ "$INSIDE_EMACS" = 'vterm' ]] && [[ -d "$GENTOO_EMACS_VTERM_ETC_PATH" ]]; then
-    source "$GENTOO_EMACS_VTERM_ETC_PATH/emacs-vterm-bash.sh"
-fi
+A function call can call this on its /done-hook/ to delete the frame. See also [[*Capture from the browser][Capture from the browser]].
+
+#+begin_src emacs-lisp
+(defun my/del-temp-frame ()
+  "Delete frame if its frame title matches."
+  (when (equal (frame-parameter nil 'name) "emacs-temp-frame")
+    (delete-frame)))
+#+end_src
+
+** Web search
+
+Define macros shortcuts.
+
+#+begin_src emacs-lisp
+(defvar my/search-engines
+  '(("w"  . "https://en.wikipedia.org/wiki/Special:Search?search=%s")
+    ("gh" . "https://github.com/search?q=%s")
+    ("gp" . "https://packages.gentoo.org/packages/search?q=%s")
+    ("ew" . "https://www.emacswiki.org/emacs/Search?action=index&match=%s")))
+#+end_src
+
+Save local search history to a variable list. It should be auto-recorded by =savehist-additional-variables=.
+
+#+begin_src emacs-lisp
+(defvar my/web-search-history nil)
+#+end_src
+
+Prompt for a URL or a search term.
+
+1. Prompt for input with interactive completion from history.
+2. Check for search engine shortcut prefix like =prefix rest=.
+   If match, search over prefix. Encode rest as url string and send to browser.
+3. Check if input likes a standalone URL, if so, send URL to browser.
+4. Encode the input and feed to browser, using default search engine string.
+
+#+begin_src emacs-lisp
+(defun my/web-search ()
+  (interactive)
+  (let* ((in (string-trim (completing-read "URL: " my/web-search-history
+                                           nil nil nil 'my/web-search-history)))
+         (bang (and (string-match "\\`\\(\\w+\\) \\(.+\\)" in)
+                    (assoc (match-string 1 in) my/search-engines))))
+    (browse-url
+     (cond (bang (format (cdr bang) (url-hexify-string (match-string 2 in))))
+           ((string-match-p "\\`\\(https?://\\|[^ ]+\\.[a-z]\\{2,\\}\\(/\\|\\'\\)\\)" in) in)
+           (t (format "https://duckduckgo.com/?q=%s" (url-hexify-string in)))))))
 #+end_src
 
 * Fixes :PERSONAL:FIX:
 
-** LilyPond version mismatch in unstable
+** org-babel hardcode Lilypond on Mac OS
 
-This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable org-mode build.
+#+begin_src emacs-lisp
+(setq org-babel-lilypond-ly-command (or (executable-find "lilypond") "lilypond"))
+#+end_src
+
+** Mini Lilypond sheet in org-mode
 
 #+begin_src emacs-lisp
 ;; Org's built-in cropping not working. Got full size A4 music sheet.
@@ -1380,40 +1209,8 @@ This is probably due to using LilyPond 2.26 gentoo unstable mixed with stable or
 
 ;; LilyPond 2.26 renamed its mode to `lilypond-mode'
 ;; Org's src-block and Gentoo's site file still call `LilyPond-mode'.
-(autoload 'lilypond-mode "lilypond-mode" nil t)
-(defalias 'LilyPond-mode #'lilypond-mode)
-#+end_src
-
-** Exclude pixel-scroll-mode in vterm
-
-The =pixel-scroll-precision-interpolate-page= hijacks the =PageUp= and =PageDown= in vterm. Allow it to pass through here.
-
-#+begin_src emacs-lisp
-(defun my/vterm-unshadow-pixel-scroll ()
-  "Let vterm handle PageUp/PageDown instead of `pixel-scroll-precision-mode'."
-  (push (cons 'pixel-scroll-precision-mode (make-sparse-keymap))
-        minor-mode-overriding-map-alist))
-
-(add-hook 'vterm-mode-hook #'my/vterm-unshadow-pixel-scroll)
-#+end_src
-
-** (WIP) vterm and TRAMP integration
-
-Setting up vterm + TRAMP with directory tracking requires careful setup, so the extra vterm prompts don't leak into TRAMP and hangs it.
-
-In remote vterm, use default login shell for all except for docker.
-
-#+begin_src emacs-lisp
-(setq vterm-tramp-shells '((t login-shell) ("docker" "/bin/sh")))
-#+end_src
-
-** vterm and consult-yank-pop
-
-vterm major mode remaps the vanilla =yank-pop=, which we never called in consult. This explicitly overrides =M-y consult-yank-pop=.
-
-#+begin_src emacs-lisp
-(with-eval-after-load 'vterm
-  (keymap-set vterm-mode-map "M-y" #'vterm-yank-pop))
+;; (autoload 'lilypond-mode "lilypond-mode" nil t)
+;; (defalias 'LilyPond-mode #'lilypond-mode)
 #+end_src
 
 ** Embark keybinds with flyspell :INACTIVE:

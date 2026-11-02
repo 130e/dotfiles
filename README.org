@@ -1,13 +1,12 @@
 * Dotfiles
 
-This repo tracks my personal computers' /literate/ configurations.
+This repo contains /literate/ configurations for my devices.
 
-Basically every config snippet is written as org source block. Open each config file in emacs (now I am literate). Next execute =C-c C-v t= (org-babel-tangle) to write into specified locations.
+The config are split into sections so they are more readable and easier to navigate. Once ready, they can be compiled (tangled) into target config files and read by the applications.
 
-- Double-check target path before running.
-- It overwrites.
-- Property lines are read when the file opens. After editing =#+PROPERTY= line, do =C-c C-c= or refresh the file before tangling.
+** Note
+
+- Double-check target path before running. It overwrites.
+- Property lines are read when the file opens. After editing =#+PROPERTY= line, refresh the file before tangling.
 - The language name is the routing key. A block tagged =sh= or =shell= will not match =header-args:bash= and will fail silently.
-- Disabling a section. Set =:tangle no= on the block.
-
-** TODO portage literate config
+- To disable a section, set =:tangle no= on the source block.
